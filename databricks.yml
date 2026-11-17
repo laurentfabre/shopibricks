@@ -17,3 +17,11 @@ targets:
     default: true
     workspace:
       profile: fevm
+  emerging-hackathon:
+    workspace:
+      host: https://emerging-emea-hackathons.cloud.databricks.com
+      profile: emerging-hackathon
+    variables:
+      catalog: openai
+      schema: shopibricks
+      warehouse_id: 009278ac015663b9

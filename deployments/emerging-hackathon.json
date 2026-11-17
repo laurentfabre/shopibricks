@@ -1,0 +1,16 @@
+{
+  "profile": "emerging-hackathon",
+  "host": "https://emerging-emea-hackathons.cloud.databricks.com",
+  "catalog": "openai",
+  "schema": "shopibricks",
+  "warehouse_id": "009278ac015663b9",
+  "app_name": "shopibricks-paris",
+  "lakebase_project": "shopibricks-paris",
+  "vector_endpoint": "shopibricks-paris",
+  "embedding_endpoint": "databricks-gte-large-en",
+  "model_endpoint": "databricks-gpt-6-luna",
+  "model": "system.ai.gpt-6-luna",
+  "source_code_path": "/Workspace/Users/laurent.fabre@databricks.com/shopibricks-emerging-hackathon-app",
+  "experiment_name": "/Shared/ShopiBricks-OpenAI-Traces",
+  "genie_space_id": "01f1e2d62292112eb5f022cbe77d1ffa"
+}
