@@ -78,7 +78,7 @@ async function modelLoop(agent:string,input:unknown[],tools:Record<string,Tool>,
   });
   lastGatewaySuccess=new Date().toISOString();
   if(started)emit({type:'TEXT_MESSAGE_END',messageId,agent});
-  emit({type:'CUSTOM',name:'shopibricks.model',agent,value:{model:process.env.SHOPIBRICKS_MODEL,usage:response.usage,provider:'OpenAI',gateway:'Unity Gateway',response_id:response.id}});
+  emit({type:'CUSTOM',name:'shopibricks.model',agent,value:{model:process.env.SHOPIBRICKS_MODEL,served_model:response.model,usage:response.usage,provider:'OpenAI',gateway:'Unity Gateway',response_id:response.id}});
   const output=response.output||[];
   for(const item of output){
    if(item.type==='function_call')input.push({type:'function_call',name:item.name,call_id:item.call_id,arguments:item.arguments});

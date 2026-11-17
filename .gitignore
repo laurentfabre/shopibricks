@@ -36,3 +36,8 @@ tests/test-results/
 /docs/*.png
 /tests/VERIFICATION.md
 TASKS.md
+
+# Showcase deployment values (local only; see the .example files)
+app/app.showcase.yaml
+resources/app-create.showcase.json
+scripts/showcase.local.env

@@ -1,0 +1,26 @@
+# ShopiBricks x Unity Gateway, second deployment. Copy to app/app.showcase.yaml and fill the placeholders.
+# scripts/deploy-showcase.sh stages it as app.yaml; the reference app.yaml is untouched.
+command: ["npm", "start"]
+env:
+  - name: NODE_ENV
+    value: production
+  - name: SHOPIBRICKS_MODEL
+    value: <catalog>.<schema>.concierge   # custom Unity Gateway model service
+  - name: SHOPIBRICKS_UG_ALLOW_ROUTING
+    value: "1"
+  - name: SHOPIBRICKS_CATALOG
+    value: <catalog>
+  - name: SHOPIBRICKS_SCHEMA
+    value: <schema>
+  - name: DATABRICKS_WAREHOUSE_ID
+    valueFrom: sql-warehouse
+  - name: LAKEBASE_ENDPOINT
+    valueFrom: postgres
+  - name: MLFLOW_EXPERIMENT_ID
+    valueFrom: mlflow
+  - name: MLFLOW_ASYNC_TRACE_LOGGING_RETRY_TIMEOUT
+    value: "15"
+  - name: SHOPIBRICKS_PUBLIC_URL
+    value: https://<app-url>
+  - name: SHOPIBRICKS_UG_USAGE_TABLE   # optional workspace-scoped view over system.ai_gateway.usage
+    value: <catalog>.<schema>.gateway_usage

@@ -1,0 +1,9 @@
+{
+ "name": "<app-name>",
+ "description": "ShopiBricks x Unity Gateway: governed OpenAI agents, model lab and Codex governance",
+ "resources": [
+  {"name": "postgres", "postgres": {"branch": "projects/<lakebase-project>/branches/production", "database": "projects/<lakebase-project>/branches/production/databases/databricks-postgres", "permission": "CAN_CONNECT_AND_CREATE"}},
+  {"name": "sql-warehouse", "sql_warehouse": {"id": "<warehouse-id>", "permission": "CAN_USE"}},
+  {"name": "mlflow", "experiment": {"experiment_id": "<experiment-id>", "permission": "CAN_EDIT"}}
+ ]
+}

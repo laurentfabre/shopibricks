@@ -16,6 +16,7 @@ import { agentInputSchema, catalogFeed, catalogReadiness, summarizeIntents } fro
 import { profiles, channels } from '../shared/experience.js';
 import { exampleQueries } from '../shared/intelligence.js';
 import { activityQueries, buildAtlas } from './intelligence.js';
+import { registerUnityGateway } from './unity-gateway.js';
 
 const app=express();app.disable('x-powered-by');
 app.use(express.json({limit:'100kb'}));
@@ -107,6 +108,7 @@ app.post('/mcp',wrap(async(req,res)=>{
  await server.connect(transport);await transport.handleRequest(req,res,req.body);
  if(req.body?.method==='tools/call')await protocolEvent(res.locals.identity.owner,{type:'CUSTOM',name:'shopibricks.mcp',timestamp:Date.now(),value:{method:req.body.method,tool:req.body.params?.name,transport:'Streamable HTTP',server:'shopibricks-commerce'}});
 }));
+registerUnityGateway(app,wrap);
 app.get('/mcp',(_req,res)=>res.status(405).json({jsonrpc:'2.0',error:{code:-32000,message:'This stateless MCP server uses POST Streamable HTTP.'},id:null}));
 app.get('/legal/:page',(_req,res)=>res.type('html').send('<!doctype html><html><title>ShopiBricks sandbox policies</title><body style="font:18px system-ui;max-width:720px;margin:80px auto;line-height:1.8"><h1>ShopiBricks is a demonstration.</h1><p>All catalog and commerce data is synthetic. Orders never collect payment, send email, ship products or create a commercial contract. Use fictional contact details only. Demo conversations and protocol events are stored in the dedicated Databricks Lakebase database for presentation and debugging. This demo is not an approved ChatGPT commerce merchant.</p><a href="/">Back to ShopiBricks</a></body></html>'));
 app.use((error:unknown,req:Request,res:Response,_next:NextFunction)=>{

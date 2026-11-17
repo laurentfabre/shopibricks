@@ -112,8 +112,72 @@ def main(request):
         w = WorkspaceClient()
         result = w.jobs.run_now(job_id=int(os.environ["SHOPIBRICKS_STREAM_JOB_ID"]), job_parameters={"minutes":"60"})
         emit({"type": "completed", "response": {"run_id": result.run_id}})
+    elif action == "ug_overview":
+        emit({"type": "completed", "response": unity_gateway_overview(request["service"])})
+    elif action == "ug_lab":
+        import ug_bench
+        from concurrent.futures import ThreadPoolExecutor
+        scenario = ug_bench.scenario(request["scenario"])
+        models = [m for m in request["models"] if m in ug_bench.PRICES_DBU][:4]
+        with ThreadPoolExecutor(max(len(models), 1)) as pool:
+            rows = list(pool.map(lambda m: ug_bench.run_once(m, scenario, None, request.get("effort", "low")), models))
+        emit({"type": "completed", "response": {"scenario": {"id": scenario.id, "title": scenario.title, "prompt": scenario.prompt}, "rows": rows}})
+    elif action == "ug_route":
+        w = WorkspaceClient()
+        service = request["service"]
+        destinations = [{"name": f"primary-{request['primary']}", "destination_type": "DESTINATION_TYPE_PAY_PER_TOKEN_FOUNDATION_MODEL",
+                         "pay_per_token_config": {"model": f"models/system.ai.databricks-{request['primary']}"}, "traffic_percentage": 100}]
+        result = w.api_client.do("PATCH", f"/api/2.1/unity-catalog/model-services/{service}",
+                                 query={"update_mask": "config.routing.destinations"},
+                                 body={"config": {"routing": {"destinations": destinations}}})
+        emit({"type": "completed", "response": result})
     else:
         raise ValueError("Unknown gateway operation")
+
+
+def unity_gateway_overview(service):
+    """Read-only view of the Unity Gateway configuration that governs this app."""
+    w = WorkspaceClient()
+
+    def get(path, query=None):
+        try:
+            return w.api_client.do("GET", path, query=query)
+        except Exception as exc:
+            return {"error": str(exc)[:400]}
+
+    def list_all(path, parent):
+        items, token = [], None
+        for _ in range(10):
+            page = get(path, {"parent": parent, **({"page_token": token} if token else {})})
+            if "error" in page:
+                return page
+            items += next((v for v in page.values() if isinstance(v, list)), [])
+            token = page.get("next_page_token")
+            if not token:
+                break
+        return items
+
+    out = {"service": service, "workspace_id": str(w.get_workspace_id())}
+    try:
+        out["identity"] = w.current_user.me().user_name
+    except Exception:
+        out["identity"] = None
+    out["model_service"] = get(f"/api/2.1/unity-catalog/model-services/{service}")
+    out["grants"] = get(f"/api/2.1/unity-catalog/permissions/model_service/{service}")
+    system_models = list_all("/api/2.1/unity-catalog/model-services", "schemas/system.ai")
+    out["system_ai_models"] = system_models if isinstance(system_models, dict) else [
+        {"name": m.get("name", "").split("/")[-1], "api_types": m.get("supported_api_types", [])} for m in system_models]
+    parent = ".".join(service.split(".")[:2])
+    mcp = []
+    for schema in dict.fromkeys(["system.ai", parent]):
+        found = list_all("/api/2.1/unity-catalog/mcp-services", f"schemas/{schema}")
+        if isinstance(found, list):
+            mcp += [{"name": m.get("name", "").split("/")[-1], "comment": (m.get("comment") or "").split(". ")[0][:140]} for m in found]
+    out["mcp_services"] = mcp
+    if not service.startswith("system.ai."):
+        app_models = list_all("/api/2.1/unity-catalog/model-services", f"schemas/{parent}")
+        out["app_schema_services"] = [m.get("name", "").split("/")[-1] for m in app_models] if isinstance(app_models, list) else app_models
+    return out
 
 if __name__ == "__main__":
     for line in sys.stdin:
