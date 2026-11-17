@@ -2,7 +2,7 @@
 
 **50 minutes. Laurent: 00:00–25:00. Hatim: 25:00–50:00.**
 
-Keep [the concise presenter cues](PRESENTER_CUES.md) beside the live app; this document contains the detailed rehearsal and fallback instructions.
+For a shorter walkthrough, open **Present → Start guided demo** in the app: 13 Driver.js highlights, about 13 minutes of narration plus live interactions. Start at any agenda stop, spotlight its UI, or open its view to interact. **Download talking points** saves the full script. Speaker notes inside the tour are optional and visible on a shared screen; keep [the presenter cues](PRESENTER_CUES.md) on a second screen if you prefer. This document contains the extended Laurent / Hatim session and rehearsal instructions.
 
 The through-line: a shopper wants a Paris weekend kit below €250. Demand changes while the shopper is deciding. Governed data and specialist agents find an available option, the interface adapts, and the shopper explicitly confirms a sandbox order. Follow the resulting order and its events into the merchant view.
 
@@ -10,7 +10,7 @@ This is a synthetic retail demo. A completed sandbox order persists in Lakebase 
 
 ## Recorded rehearsal checkpoint — 7 November 2026
 
-The [hosted app](https://shopibricks-paris-7474645565734606.aws.databricksapps.com) runs successful final deployment `01f1da4b5185131aaedb46647f556b20` from **01:34:45 UTC**. Its agent rerun passed **11/11** checks with six real model calls, recommending available headphones and a tote for **€168**. Its final checkout rerun passed **27/27** checks and created a €19 notebook order, decrementing stock **114 → 113 exactly once**.
+The [hosted app](https://shopibricks-paris-7474645565734606.aws.databricksapps.com) used deployment `01f1da4b5185131aaedb46647f556b20` for this historical rehearsal at **01:34:45 UTC**. Its agent rerun passed **11/11** checks with six real model calls, recommending available headphones and a tote for **€168**. Its checkout rerun passed **27/27** checks and created a €19 notebook order, decrementing stock **114 → 113 exactly once**. These are dated results; see [current validation](VALIDATION.md) and verify the active deployment before presenting.
 
 Separate dated rehearsals proved the server-computed **€237** UI total and visible human-confirmed order `ord_ca95c270-66fd-4006-a17a-2fbb9f0befc1`, which survived permalink reload and appeared in Unity Catalog `current_orders` through native CDC. [The hosted order screenshot](hosted-order.png) and [€237 recommendation screenshot](hosted-agent.png) retain those earlier rehearsals; do not describe them as the final €168 run.
 
@@ -20,7 +20,7 @@ The final hosted run's **MLflow trace body was downloaded, inspected and matched
 
 ## Rehearsal and room setup
 
-- Use the deployed Databricks App from the current deployment record, signed in with a presenter account. Its tabs are **Shop**, **Operations** and **Protocol studio**. Keep separate browser tabs for each if helpful.
+- Use the deployed Databricks App from the current deployment record, signed in with a presenter account. Its navigation includes **Discovery intelligence**, **Storefront**, **Commerce operations** and **Developer studio**. Keep separate browser tabs for each if helpful.
 - Open the dedicated Lakeflow pipeline, source volume, Unity Catalog schema, MLflow experiment, Genie agent and AI/BI dashboard from the deployment record. Only include a surface in the live script after its verification is recorded.
 - Use 1440×900 or larger resolution with browser zoom large enough to read product prices and tool names from the back of the room. Collapse the browser bookmarks bar. Turn off notifications.
 - Confirm the app health and integrations panel reports the actual available model, Lakebase and analytics status. Run one short prompt. Verify a fresh event timestamp and inspect a successful trace rather than relying on a green badge alone.

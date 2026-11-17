@@ -2,6 +2,8 @@ command: ["npm", "start"]
 env:
   - name: NODE_ENV
     value: production
+  - name: NPM_CONFIG_INCLUDE
+    value: dev
   - name: SHOPIBRICKS_MODEL
     value: system.ai.gpt-6-luna
   - name: SHOPIBRICKS_CATALOG

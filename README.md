@@ -16,7 +16,13 @@ The hosted demo requires access to its Databricks workspace. This public reposit
 - **Developer:** inspect AG-UI events, MCP tools, agent handoffs, gateway status and ACP-shaped sandbox checkout.
 - **Operations:** live inventory and sandbox orders, plus clearly labeled synthetic streaming analytics.
 
-The copilot is toggleable, the workspace adapts to mobile, and a guided tour connects the shopper, merchant and developer journeys.
+The copilot is toggleable, the workspace adapts to mobile, and Driver.js tours connect the shopper, merchant and developer journeys.
+
+## Present the demo
+
+Select **Present → Start guided demo** for a 13-stop walkthrough: intent clusters, catalog gaps, brand voice, personas, specialist agents, shopper approval, operations, traces and channel readiness. Allow about 13 minutes for narration, plus live interactions. Select any agenda stop to **Spotlight this step** or **Open this view** for hands-on demonstration.
+
+Each stop includes a talk track, an action to show, evidence to point to, and a fallback. **Download talking points** saves the full script; [presenter cues](docs/PRESENTER_CUES.md) contain the same notes. Optional speaker notes appear inside the spotlight and are visible to the audience when screen sharing. **Use demo prompt** prefills the composer for you to submit. Tours navigate and highlight without submitting prompts or confirming orders. The original **Take a tour**, bag and receipt guides remain available.
 
 ## What is real, and what is simulated?
 
@@ -78,11 +84,12 @@ npm ci
 SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:atlas
 SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:funnel
 SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:tour
+SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:presenter
 ```
 
 Browser tests use isolated Chrome with explicit API fixtures. Run the application tests first to generate the atlas fixture. Real integration checks are separate and require the configured workspace.
 
-The November 2026 redesign passed 27 TypeScript tests, 61 atlas/persona browser checks, seven checkout recovery scenarios, desktop/mobile tours, and 21 hosted checks. The hosted run verified production asset hashes and captured a real concierge question in the live atlas. See [validation details](docs/VALIDATION.md).
+The November 2026 redesign passed 27 TypeScript tests, 61 atlas/persona browser checks, seven checkout recovery scenarios, desktop/mobile tours, and 21 hosted checks. The hosted run verified production asset hashes and captured a real concierge question in the live atlas. The presenter update additionally passed 23 browser checks and nine read-only hosted checks, with the application, atlas/persona and existing tour regressions passing again. See [validation details](docs/VALIDATION.md).
 
 ## Repository
 

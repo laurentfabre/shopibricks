@@ -23,6 +23,8 @@ Open http://localhost:8000. `.env.example` contains only nonsecret resource meta
 
 Databricks Apps starts `npm start` and serves the built `dist` directory. Python dependencies are pinned in `requirements.txt`, generated from `uv.lock`. Gateway calls use a small pool of persistent Python workers so official SDK initialization and MLflow instrumentation are reused. Set `SHOPIBRICKS_PYTHON` only when a custom Python path is needed. In local development `.venv/bin/python` is selected automatically; hosted startup uses `python3`.
 
+The manifest sets `NPM_CONFIG_INCLUDE=dev` so the hosted build can run TypeScript and Vite while `NODE_ENV` remains `production`. This build setting is explicit and does not depend on a local `.npmrc`.
+
 Bind the resources listed in `app.yaml`. Cloud app resources and deployment are owned by the parent project. App service principal privileges are scoped to the dedicated `shopibricks` Lakebase schema and declared Databricks resources.
 
 ## Interfaces

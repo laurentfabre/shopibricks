@@ -1,0 +1,28 @@
+import {useEffect,useRef,useState} from 'react';
+import {ArrowUpRight,Check,Copy,Download,Mic2,Play,Timer,X} from 'lucide-react';
+import {TourButton,type GuideStep} from './GuidedTour';
+import {demoStops,demoDuration,durationLabel,demoNotesMarkdown} from './demo-script';
+import './demo-guide.css';
+
+type Props={open:boolean;onClose:()=>void;onShow:(view:string,assistant?:boolean)=>void;onReturn:()=>void;onPrompt:(prompt:string)=>void};
+export function DemoGuide({open,onClose,onShow,onReturn,onPrompt}:Props){
+ const dialog=useRef<HTMLDialogElement>(null);const opener=useRef<HTMLElement|null>(null);const[selected,setSelected]=useState(0);const[notes,setNotes]=useState(false);const[copyStatus,setCopyStatus]=useState('');
+ const step=demoStops[selected];
+ useEffect(()=>{if(open){opener.current=document.activeElement instanceof HTMLElement?document.activeElement:null;setCopyStatus('');if(!dialog.current?.open)dialog.current?.showModal();}else{dialog.current?.close();opener.current?.focus({preventScroll:true});opener.current=null;}},[open]);
+ const steps:GuideStep[]=demoStops.map(stop=>({target:stop.target,title:stop.title,description:stop.description,chapter:stop.chapter,duration:durationLabel(stop.seconds),prepare:()=>onShow(stop.view,stop.assistant),waitForTarget:stop.waitForTarget,fallbackTarget:stop.fallbackTarget,notes:{say:stop.say,action:stop.action,proof:stop.proof,fallback:stop.fallback}}));
+ const begin=()=>dialog.current?.close();
+ const end=()=>{onReturn();requestAnimationFrame(()=>{if(dialog.current?.isConnected&&!dialog.current.open)dialog.current.showModal();});};
+ const go=(index:number)=>{setSelected(index);setCopyStatus('');};
+ const download=()=>{const url=URL.createObjectURL(new Blob([demoNotesMarkdown()],{type:'text/markdown;charset=utf-8'}));const anchor=document.createElement('a');anchor.href=url;anchor.download='shopibricks-presenter-notes.md';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+ const copy=async(text:string)=>{try{await navigator.clipboard.writeText(text);setCopyStatus('Copied to clipboard.');}catch{setCopyStatus('Clipboard unavailable. Select the text or download the notes instead.');}};
+ return <dialog className="demo-guide" ref={dialog} aria-labelledby="demo-guide-title" onCancel={event=>{event.preventDefault();onClose();}} onClick={event=>{if(event.target===dialog.current){const r=dialog.current.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)onClose();}}}>
+  <div className="demo-guide-heading"><div><span className="demo-guide-kicker"><Mic2 size={13}/>YOUR ON-STAGE COMPANION</span><h2 id="demo-guide-title">A clear story.<br/><em>A confident demo.</em></h2><p>{demoStops.length} highlights · about {Math.ceil(demoDuration/60)} minutes, plus live interactions</p></div><button className="demo-guide-close" aria-label="Close demo guide" onClick={onClose} autoFocus><X size={20}/></button></div>
+  <div className="demo-guide-controls"><TourButton label="Start guided demo" steps={steps} onStart={begin} onEnd={end} speakerNotes={notes} onStepChange={setSelected}/><label><input type="checkbox" checked={notes} onChange={e=>setNotes(e.target.checked)}/>Show speaker notes in the tour</label><button onClick={download}><Download size={15}/>Download talking points</button></div>
+  <p className="demo-guide-disclosure">Highlights guide the audience. Open a view to interact, submit a prompt, or review checkout yourself. Expanded notes are visible on a shared screen.</p>
+  <div className="demo-guide-body"><nav className="demo-agenda" aria-label="Demo agenda">{demoStops.map((s,i)=><button key={s.id} aria-current={selected===i?'step':undefined} onClick={()=>go(i)}><span>{String(i+1).padStart(2,'0')}</span><div><strong>{s.title}</strong><small>{s.view.split(':')[0]==='Growth studio'?'Merchant':s.view==='Shop'?'Shopper':s.view}</small></div><time>{durationLabel(s.seconds)}</time></button>)}</nav>
+   <section className="demo-step-notes" aria-label="Presenter talking points"><div className="demo-step-top"><span>{step.chapter}</span><span><Timer size={13}/>{durationLabel(step.seconds)}</span></div><h3>{step.title}</h3><blockquote>{step.say}</blockquote><div className="demo-show"><span>SHOW</span><p>{step.action}</p></div><div className="demo-proof"><Check size={16}/><div><strong>Point to the evidence</strong><p>{step.proof}</p></div></div><details className="demo-fallback"><summary>If this is unavailable</summary><p>{step.fallback}</p></details>{step.prompt&&<div className="demo-prompt"><strong>Ready-to-use prompt</strong><p>{step.prompt}</p><div><button onClick={()=>copy(step.prompt!)}><Copy size={13}/>Copy prompt</button><button onClick={()=>{onClose();onPrompt(step.prompt!);}}><ArrowUpRight size={13}/>Use demo prompt</button></div><small>Prefills the composer. You choose when to send.</small></div>}
+    <div className="demo-step-actions"><TourButton label="Spotlight this step" steps={steps} initialStep={selected} onStart={begin} onEnd={end} speakerNotes={notes} onStepChange={setSelected}/><button onClick={()=>{onClose();onShow(step.view,step.assistant);}}><Play size={13}/>Open this view</button><button aria-label="Copy this talking point" onClick={()=>copy(`${step.title}\n\n${step.say}\n\nShow: ${step.action}\nEvidence: ${step.proof}`)}><Copy size={14}/></button></div><p className="demo-copy-status" role="status">{copyStatus}</p>
+   </section></div>
+  <footer className="demo-guide-footer"><span>Before presenting: verify catalog, warm up one agent request, and check analytics timestamps.</span><span>Fictional commerce · explicit sandbox approval</span></footer>
+ </dialog>;
+}

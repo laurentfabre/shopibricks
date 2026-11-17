@@ -4,47 +4,77 @@ import {driver, type Driver, type DriveStep} from 'driver.js';
 import 'driver.js/dist/driver.css';
 import './tour.css';
 
-export type GuideStep = {target: string; title: string; description: string; chapter: string; prepare?: () => void};
+export type GuideStep = {target: string; title: string; description: string; chapter: string; prepare?: () => void; waitForTarget?:boolean; fallbackTarget?:string; notes?:{say:string;action:string;proof:string;fallback:string}; duration?:string};
+const visibleElement=(selector:string)=>{const element=document.querySelector(selector);return element&&element.getClientRects().length&&!element.closest('[hidden]')?element:undefined;};
 
-export function TourButton({steps, label = 'Take a tour', disabled = false, onEnd}: {
-  steps: GuideStep[]; label?: string; disabled?: boolean; onEnd?: () => void;
+export function TourButton({steps, label = 'Take a tour', disabled = false, onEnd, onStart, initialStep=0, speakerNotes=false, onStepChange}: {
+  steps: GuideStep[]; label?: string; disabled?: boolean; onEnd?: () => void; onStart?:()=>void; initialStep?:number; speakerNotes?:boolean; onStepChange?:(index:number)=>void;
 }) {
   const active = useRef<Driver | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  useEffect(() => () => {active.current?.destroy();}, []);
+  const generation=useRef(0);
+  const pending=useRef<HTMLElement|null>(null);
+  const cleanup=useRef<(()=>void)|null>(null);
+  useEffect(() => () => {generation.current++;pending.current?.remove();if(active.current?.isActive())active.current.destroy();else cleanup.current?.();}, []);
 
   function start() {
-    if (active.current?.isActive()) return;
+    if (active.current || !steps.length) return;
     const origin = {x: scrollX, y: scrollY};
     const inertElements = new Map<HTMLElement, boolean>();
+    const attributes=new Map<Element,Map<string,string|null>>();
     const visited = new Set<HTMLElement>();
-    let transitioning = false;
+    let transitioning = false, ended=false,showNotes=speakerNotes;
+    const cancelPending=(event:KeyboardEvent)=>{
+      if(event.key==='Escape'&&pending.current){event.preventDefault();event.stopImmediatePropagation();if(active.current?.isActive())active.current.destroy();else finish();}
+    };
+    document.addEventListener('keydown',cancelPending,true);
     const restore = (element?: Element) => {
       if (element instanceof HTMLElement && inertElements.has(element)) {
         element.inert = inertElements.get(element)!;
         inertElements.delete(element);
       }
     };
-    const tourSteps: DriveStep[] = steps.map(step => ({
-      element: () => {
-        step.prepare?.();
-        return document.querySelector(step.target) || document.body;
-      },
+    const finish=()=>{
+      if(ended)return;ended=true;generation.current++;pending.current?.remove();pending.current=null;
+      document.removeEventListener('keydown',cancelPending,true);
+      for(const element of inertElements.keys())restore(element);
+      for(const element of visited){element.classList.remove('driver-active-element','driver-no-interaction');for(const [name,value] of attributes.get(element)||[]){if(value===null)element.removeAttribute(name);else element.setAttribute(name,value);}}
+      active.current=null;cleanup.current=null;onEnd?.();
+      requestAnimationFrame(()=>{trigger.current?.focus({preventScroll:true});window.scrollTo({left:origin.x,top:origin.y,behavior:'instant'});});
+    };
+    cleanup.current=finish;
+    const resolved=new Map<number,Element>();const fallbackSteps=new Set<number>();
+    async function move(index:number){
+      transitioning=true;const ticket=++generation.current;const step=steps[index];
+      const state=active.current?.getState();if(state?.popover){state.popover.nextButton.disabled=true;state.popover.previousButton.disabled=true;}
+      step.prepare?.();
+      if(step.waitForTarget&&!visibleElement(step.target)){
+        const status=document.createElement('div');status.className='tour-loading';status.setAttribute('role','status');
+        const text=document.createElement('span');text.textContent='Preparing this demo highlight…';const cancel=document.createElement('button');cancel.textContent='Cancel';cancel.onclick=()=>{if(active.current?.isActive())active.current.destroy();else finish();};status.append(text,cancel);document.body.append(status);pending.current=status;
+        const until=performance.now()+5000;
+        while(ticket===generation.current&&!visibleElement(step.target)&&performance.now()<until){
+          if(step.fallbackTarget&&document.querySelector(`${step.fallbackTarget} .atlas-error, ${step.fallbackTarget} .atlas-empty`))break;
+          await new Promise(resolve=>setTimeout(resolve,60));
+        }
+        status.remove();if(pending.current===status)pending.current=null;
+      }
+      if(ticket!==generation.current||ended)return;
+      const found=visibleElement(step.target);const target=found||(step.fallbackTarget?visibleElement(step.fallbackTarget):undefined)||document.body;
+      if(!found)fallbackSteps.add(index);else fallbackSteps.delete(index);
+      if(!attributes.has(target))attributes.set(target,new Map(['aria-haspopup','aria-expanded','aria-controls'].map(name=>[name,target.getAttribute(name)])));
+      resolved.set(index,target);onStepChange?.(index);
+      if(active.current?.isActive())active.current.moveTo(index);else active.current?.drive(index);
+    }
+    const tourSteps: DriveStep[] = steps.map((step,index) => ({
+      element: () => resolved.get(index)||visibleElement(step.target)||document.body,
       popover: {title: step.title, description: step.description, side: 'bottom', align: 'start'},
       onHighlightStarted: element => {
         transitioning = true;
-        if (element instanceof HTMLElement && element !== document.body) {
-          visited.add(element);
-          inertElements.set(element, element.inert);
-          element.inert = true;
-        }
+        if (element instanceof HTMLElement && element !== document.body) {visited.add(element);inertElements.set(element,element.inert);element.inert=true;}
       },
       onHighlighted: (_element, _step, {state, driver}) => {
         transitioning = false;
-        if (state.popover) {
-          state.popover.nextButton.disabled = false;
-          state.popover.previousButton.disabled = driver.isFirstStep();
-        }
+        if (state.popover) {state.popover.nextButton.disabled=false;state.popover.previousButton.disabled=driver.isFirstStep();}
       },
       onDeselected: restore,
     }));
@@ -52,42 +82,33 @@ export function TourButton({steps, label = 'Take a tour', disabled = false, onEn
       steps: tourSteps,
       animate: !matchMedia('(prefers-reduced-motion: reduce)').matches,
       smoothScroll: false,
-      overlayColor: '#061d24', overlayOpacity: .72, stagePadding: 8, stageRadius: 12,
+      overlayColor: '#102237', overlayOpacity: .72, stagePadding: 8, stageRadius: 12,
       disableActiveInteraction: true, allowKeyboardControl: true, allowClose: true,
       overlayClickBehavior: () => {},
       showProgress: true, progressText: '{{current}} / {{total}}',
       nextBtnText: 'Next →', prevBtnText: 'Back', doneBtnText: 'Finish tour',
       popoverClass: 'shopibricks-tour',
-      onNextClick: (_element, _step, {driver}) => {if (!transitioning) driver.isLastStep() ? driver.destroy() : driver.moveNext();},
-      onPrevClick: (_element, _step, {driver}) => {if (!transitioning) driver.movePrevious();},
-      onPopoverRender: (popover, {state}) => {
-        const chapter = document.createElement('div');
-        chapter.className = 'tour-chapter';
-        chapter.textContent = steps[state.activeIndex || 0].chapter;
-        popover.wrapper.prepend(chapter);
-        popover.closeButton.setAttribute('aria-label', 'Exit tour');
-        popover.nextButton.setAttribute('aria-label', (state.activeIndex || 0) === steps.length - 1 ? 'Finish tour' : 'Next tour step');
-        popover.previousButton.setAttribute('aria-label', 'Previous tour step');
-        popover.nextButton.disabled = transitioning;
-        popover.previousButton.disabled = transitioning || !state.activeIndex;
-      },
-      onDestroyed: () => {
-        for (const element of inertElements.keys()) restore(element);
-        // Also clean up a highlight closed before Driver's animation completes.
-        for (const element of visited) {
-          element.classList.remove('driver-active-element', 'driver-no-interaction');
-          for (const attribute of ['aria-haspopup', 'aria-expanded', 'aria-controls']) element.removeAttribute(attribute);
+      onNextClick: (_element, _step, {driver}) => {if(!transitioning){if(driver.isLastStep())driver.destroy();else void move((driver.getActiveIndex()||0)+1);}},
+      onPrevClick: (_element, _step, {driver}) => {if(!transitioning)void move((driver.getActiveIndex()||0)-1);},
+      onPopoverRender: (popover, {state,driver}) => {
+        const index=state.activeIndex||0;const step=steps[index];
+        const chapter = document.createElement('div');chapter.className='tour-chapter';chapter.textContent=step.chapter+(step.duration?` · ${step.duration}`:'');popover.wrapper.prepend(chapter);
+        if(fallbackSteps.has(index)){const notice=document.createElement('p');notice.className='tour-unavailable';notice.setAttribute('role','status');notice.textContent='This highlight is unavailable. Showing its surrounding view; use the fallback in your speaker notes.';popover.description.append(notice);}
+        if(step.notes){
+          popover.wrapper.classList.add('presenter-tour');
+          const details=document.createElement('section');details.className='tour-speaker-notes';
+          const toggle=document.createElement('button');toggle.type='button';toggle.textContent='Speaker notes';toggle.setAttribute('aria-label','Speaker notes');toggle.setAttribute('aria-expanded',String(showNotes));toggle.setAttribute('aria-controls','tour-notes-content');details.append(toggle);
+          const content=document.createElement('div');content.className='tour-notes-content';content.id='tour-notes-content';content.hidden=!showNotes;
+          for(const [heading,text] of [['Say',step.notes.say],['Show',step.notes.action],['Evidence',step.notes.proof],['If unavailable',step.notes.fallback]]){const section=document.createElement('div');const label=document.createElement('strong');label.textContent=heading;const paragraph=document.createElement('p');paragraph.textContent=text;section.append(label,paragraph);content.append(section);}
+          details.append(content);toggle.onclick=()=>{showNotes=!showNotes;content.hidden=!showNotes;toggle.setAttribute('aria-expanded',String(showNotes));driver.refresh();};popover.description.after(details);
+          const hint=document.createElement('p');hint.className='tour-presenter-hint';hint.textContent='Notes appear on the shared screen when expanded. Exit the spotlight to interact with the app.';details.after(hint);
         }
-        active.current = null;
-        onEnd?.();
-        trigger.current?.focus({preventScroll: true});
-        requestAnimationFrame(() => {
-          trigger.current?.focus({preventScroll: true});
-          window.scrollTo({left: origin.x, top: origin.y, behavior: 'instant'});
-        });
+        popover.closeButton.setAttribute('aria-label','Exit tour');popover.nextButton.setAttribute('aria-label',index===steps.length-1?'Finish tour':'Next tour step');popover.previousButton.setAttribute('aria-label','Previous tour step');
+        popover.nextButton.disabled=transitioning;popover.previousButton.disabled=transitioning||!index;
       },
+      onDestroyed: finish,
     });
-    active.current.drive();
+    onStart?.();void move(Math.max(0,Math.min(initialStep,steps.length-1)));
   }
 
   return <button ref={trigger} aria-label={label} className="tour-button" onClick={start} disabled={disabled}><Compass size={16}/><span>{label}</span></button>;

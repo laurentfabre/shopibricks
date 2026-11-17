@@ -1,56 +1,173 @@
-# ShopiBricks — on-stage cues
+# ShopiBricks — presenter talking points
 
-**Laurent 00:00–25:00 · Hatim 25:00–50:00**
+13 highlights · approximately 13 minutes of guided narration, plus live interactions.
 
-[Open the shop](https://shopibricks-paris-7474645565734606.aws.databricksapps.com) · [Dashboard](https://fevm-serverless-stable-vwywqi.cloud.databricks.com/dashboardsv3/01f1da3c06ef14dda98059288ee88ad5/published) · [Full runbook](RUNBOOK.md)
+Open **Present → Start guided demo**. Choose any agenda stop to spotlight it or open its view. Speaker notes are optional and visible on a shared screen when enabled. The tour only navigates and highlights; submit prompts, change inventory and confirm sandbox orders yourself.
 
-Before the audience arrives: sign in, start the bounded stream, verify a new completed pipeline update, run one concierge prompt, check headphone stock, prepare the labelled rehearsal screenshots. Click **Present** for the Laurent + Hatim navigation dock.
+## 01. One journey. Three perspectives.
 
-Build checkpoint: final deployment `01f1da4b5185131aaedb46647f556b20` passed agent **11/11** and checkout **27/27** checks; its available recommendation totaled **€168**. The hosted MLflow body was inspected and correlated to that run. Earlier dated rehearsals separately proved the **€237** UI total, **€158** stockout kit, exact-order CDC and genuine Genie call. All demo verification gates are complete; ChatGPT connection remains deferred.
+01 / SET THE SCENE · 0:40
 
-| Clock | Laurent's cue | Evidence to leave on screen |
-|---|---|---|
-| 00:00 | One Paris weekend kit, €250 budget | Storefront, prices, synthetic/sandbox disclosure |
-| 05:00 | New data is arriving | Two different source-batch timestamps |
-| 09:00 | Trustworthy data needs quality rules | Completed Lakeflow update, accepted and quarantined rows |
-| 13:00 | Governance follows the data | Unity Catalog sources and actual execution identity |
-| 16:00 | Find the merchant's constraint | Current stock; actual `ask_genie`, generated SQL and dated exposure figures |
-| 20:00 | **Operations → Simulate stockout** | Forma Headphones now has zero stock; disclose the presenter action |
-| 25:00 | Hand over to Hatim | “The original choice is constrained. Show us how the agents adapt.” |
+**Say:** “We are following one question from shopper intent to a merchant decision. These three perspectives share the same catalog and operational data.”
 
-| Clock | Hatim's cue | Evidence to leave on screen |
-|---|---|---|
-| 25:00 | Submit the shopper prompt | Live run status and specialist activity |
-| 28:00 | Follow the decisions | Generated product cards, actual prices and available stock |
-| 32:00 | Recheck the constraint | An available alternative, with total under €250 |
-| 35:00 | Review, then pause | Authoritative quote, fictional address, unchecked confirmation |
-| 39:00 | Confirm and inspect | Persisted sandbox order ID; no payment or shipment |
-| 43:00 | Follow the same evidence | Protocol events, Operations, exact-order CDC and the verified hosted MLflow model span |
-| 46:00 | Explain the ChatGPT boundary | Live MCP discovery and ACP sandbox; account connection deferred |
-| 48:00 | Return to the completed journey | Leave two minutes for questions |
+**Show:** Point to Shopper, Merchant and Developer. Introduce the fictional retail scenario.
 
-**Shopper prompt**
+**Evidence:** The perspective selector changes the workspace; it does not change signed-in permissions.
 
-> Choose a Paris weekend kit with wireless audio and a bag, maximum €250 total. Check current stock and show product cards. Do not checkout.
+**If unavailable:** Stay in Merchant and explain the other perspectives verbally.
 
-**Stock follow-up**
+## 02. See intent take shape.
 
-> Check the stock again. If the headphones are unavailable, suggest the best available alternative and keep the whole kit under €250.
+02 / UNDERSTAND DEMAND · 1:10
 
-**Checkout handoff**
+**Say:** “Instead of reading a long list of queries, I can see the language shoppers share. The example corpus is fictional; My live activity contains questions captured for this account.”
 
-> Prepare a draft checkout for the products we selected. Show me the total for review. Do not complete the order without my confirmation.
+**Show:** After leaving the spotlight, select a cluster, zoom in, and select a point. Point out the dataset label.
 
-**Merchant question**
+**Evidence:** Clusters use TF-IDF keyword similarity and spherical k-means. Graph position illustrates membership, not semantic distance or conversion.
 
-> Use Genie to find the product with the highest total stockout exposure across all cities and channels. Show the generated SQL, latest event timestamp and definition. Does this represent actual lost revenue?
+**If unavailable:** If the map is unavailable, show the visible error or empty state and explain the method. Do not describe an unloaded graph as live.
 
-The verified rehearsal returned Forma Headphones, €184,212, through 00:28:41 UTC. Read the current result during the talk; this is all-city synthetic exposure, not a Paris-only value or actual lost revenue.
+## 03. Turn a question into a next move.
 
-**Trace bookmark:** [verified hosted MLflow span](https://fevm-serverless-stable-vwywqi.cloud.databricks.com/ml/experiments/588811517474050/traces/a24563724d88895df4dc1fc2ba6c36f9), experiment `588811517474050`. Show the shopping prompt, `system.ai.gpt-6-luna`, and `delegate_catalog` response. Its response ID matches final agent run `c7f44cbb-8be3-440c-9326-fdb8c9a3faf4`; describe it as the recorded rehearsal trace when showing it alongside a new live order.
+02 / UNDERSTAND DEMAND · 1:00
 
-Use fictional buyer Camille Martin, `camille@example.test`, 10 Rue de Rivoli, Paris 75001, France. Read the displayed products and amount before checking the confirmation box.
+**Say:** “The useful output is a decision: which products answer this need, and where does the catalog fall short? A gap is a review opportunity, not measured lost revenue.”
 
-**If a dependency fails:** show the real error or last successful timestamp; retry once. Keep the working merchant path or use a dated rehearsal recording. Do not label old analytics as live or an unconfirmed checkout as successful.
+**Show:** Open this view, select a question with a match or gap, then inspect its products. “Try in the storefront” prefills that question for the selected profile.
 
-**Afterwards:** stop the bounded stream, confirm no active emitter remains, and allow any already-triggered Lakeflow update to finish. Leave resources and evidence available for review.
+**Evidence:** Product price and availability come from the current catalog. Relevance scores are lexical estimates, not probabilities.
+
+**If unavailable:** If there are no questions, switch to the labeled examples or create a real shopper question. No example traffic is counted as live activity.
+
+## 04. Better answers start with product facts.
+
+03 / PREPARE THE EXPERIENCE · 0:45
+
+**Say:** “The agent needs usable product facts: identity, description, discovery tags, price, inventory and a visual. Completeness and availability are separate checks.”
+
+**Show:** Open a product dossier and show its checks. Export the internal JSON preview if useful.
+
+**Evidence:** Passing these six checks does not mean an external commerce platform has accepted the catalog.
+
+**If unavailable:** If the catalog cannot load, show the error and avoid quoting stale stock or prices.
+
+## 05. Change the voice. Keep the facts.
+
+03 / PREPARE THE EXPERIENCE · 0:45
+
+**Say:** “A brand can sound like itself without changing the truth. Voice changes the wording; prices, stock and checkout rules remain authoritative.”
+
+**Show:** Open this view and switch between two voices. Show the template label, then try the chosen voice with the concierge.
+
+**Evidence:** This preview is a template with live product facts. The selected voice guides separate live conversations in this browser session.
+
+**If unavailable:** Use the visible preview as a template demonstration. Do not present it as a model-generated response.
+
+## 06. The same collection, a different person.
+
+04 / MAKE IT PERSONAL · 1:00
+
+**Say:** “Camille, Alex, Léa and Noor have different interests and budgets. Their profiles guide discovery, but an explicit shopper request takes priority.”
+
+**Show:** Open this view and switch from Camille to Alex or Noor. Show the interests, default budget, and travel or gifting experience.
+
+**Evidence:** The profiles and their history are seeded demo context. Each profile has its own bag; conversations are also separated by experience and voice.
+
+**If unavailable:** Use the profile descriptions if the catalog is loading. Do not describe seeded history as observed customer behavior.
+
+## 07. Specialists work from current facts.
+
+05 / SHOW THE AGENTS · 0:45
+
+**Say:** “The model chooses tools and delegates work. The specialists retrieve data rather than inventing availability or a final checkout amount.”
+
+**Show:** Point out the five specialists. During a real request, watch activity change, then inspect the recorded calls in Developer studio.
+
+**Evidence:** The roster is a status display. Actual tool and handoff events in the protocol timeline are the execution evidence.
+
+**If unavailable:** If no run is active, explain the roles without claiming that a tool has just executed.
+
+## 08. Ask for a complete, constrained selection.
+
+05 / SHOW THE AGENTS · 1:30
+
+**Say:** “I will ask for a complete weekend kit under €250. The important test is whether the entire selection respects that budget and current availability.”
+
+**Show:** Choose “Use demo prompt” in the guide to prefill the composer. Submit it yourself, then read the actual product cards and total.
+
+**Evidence:** A prefilled prompt is not a model run. Model output is AI-generated; verify it against the live product cards.
+
+**If unavailable:** Show a real error and retry once, or use a clearly dated rehearsal. Do not promise a specific product combination.
+
+**Demo prompt:**
+
+> Choose a Paris weekend kit with wireless audio and a bag, maximum €250 total. Check current stock and show product cards. Do not prepare checkout.
+
+## 09. The final decision belongs to the shopper.
+
+06 / KEEP THE SHOPPER IN CONTROL · 1:00
+
+**Say:** “The assistant can prepare a draft, but it does not decide to purchase. The shopper reviews the current total and explicitly approves a sandbox order.”
+
+**Show:** Open the bag manually. Use its “Guide me” tour to show the quantity, fictional delivery details and unchecked approval box. Only confirm if you intend to place a sandbox order.
+
+**Evidence:** Confirmation persists a sandbox order and changes demo stock. No payment is charged and no goods are shipped.
+
+**If unavailable:** An empty bag is a valid starting point. Add a product manually; do not claim an order exists before confirmation.
+
+## 10. Connect the action to operational truth.
+
+07 / FOLLOW THE DATA · 1:00
+
+**Say:** “The same commerce state is visible to the merchant. These figures describe sandbox orders and current stock, with their period and source shown on screen.”
+
+**Show:** Read the current period and source. If an order was placed, find its exact ID in the order list and open its saved receipt.
+
+**Evidence:** Recorded order totals are distinct from synthetic campaign analytics. A saved receipt keeps the amounts captured at checkout.
+
+**If unavailable:** If there is no new order, use the inventory view. Do not attribute historical totals to this demo run.
+
+## 11. Know which signals are synthetic.
+
+07 / FOLLOW THE DATA · 1:00
+
+**Say:** “This panel is a separate synthetic campaign stream. Freshness and the inspectable query tell us what the chart actually represents.”
+
+**Show:** Show the query, latest event time and data source. Start a bounded stream separately only when it is part of your rehearsed demo.
+
+**Evidence:** Synthetic traffic amounts and stockout exposure are not confirmed order revenue or measured lost revenue.
+
+**If unavailable:** If the emitter is stopped, read the displayed timestamp and call this the last processed dataset, not a live stream.
+
+## 12. Show the actual execution.
+
+08 / MAKE IT INSPECTABLE · 1:10
+
+**Say:** “This is the evidence behind the interface. I can inspect which calls occurred and what they returned. The protocol timeline and MLflow traces make the execution reviewable.”
+
+**Show:** Open this view and select an event from the real shopper run. Show its payload and correlate it with the conversation.
+
+**Evidence:** MCP exposes tools, AG-UI streams interface events, and the gateway governs model access. They serve different roles.
+
+**If unavailable:** An empty timeline means no visible activity is available. Run a shopper question or label a previously recorded trace with its date.
+
+## 13. Be precise about channel readiness.
+
+09 / CLOSE THE LOOP · 0:45
+
+**Say:** “The result is a connected native commerce journey—from intent to a reviewed decision. External distribution is a separate integration and onboarding step.”
+
+**Show:** Show ShopiBricks as available, then select ChatGPT and read its outstanding prerequisites. Close on the full shopper-to-merchant story.
+
+**Evidence:** The ACP-shaped sandbox is not merchant approval. External platforms are not connected, and exporting a feed does not publish it.
+
+**If unavailable:** Keep the native storefront as the demonstrated outcome. Do not imply that a product is purchasable inside an external assistant.
+
+## Rehearsal checklist
+
+- Sign in to the demo, check catalog availability, and run one shopper question before presenting.
+- Use fictional buyer details. A confirmed sandbox order changes stock and persists data.
+- Check timestamps before describing analytics as live. Stop any bounded emitter after the session.
+- Keep a dated rehearsal available, and name it as such if a dependency is unavailable.
+- Use the [full runbook](RUNBOOK.md) for the extended Laurent / Hatim session.
