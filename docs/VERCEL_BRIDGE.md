@@ -17,7 +17,7 @@ The personal demo has a separate OAuth issuer on Vercel. This avoids asking Data
 
 5. Open the Databricks App with the same Gmail account, select **Developer studio**, and inspect an **mcp** entry in the **Live protocol timeline**. Its event payload includes the transport **ChatGPT → Vercel → Databricks App**. The app retains the Driver.js tour, speaker notes, personas and clustering atlas.
 
-The bridge's hosted consent, code exchange, MCP, refresh and revocation have been verified. Final ChatGPT browser linking must still be confirmed in the user's account; the automated verification does not visit ChatGPT's real callback.
+**Live ChatGPT connection confirmed on 19 November 2026.** Laurent selected the app in ChatGPT and confirmed that it called ShopiBricks and returned products. A separate read-only check found an active ChatGPT grant created at 14:25 UTC and 14 recent authenticated MCP requests, excluding automated-verification grants. This confirms the real user connection in addition to the automated consent, code exchange, MCP, refresh and revocation checks.
 
 ## What runs where
 

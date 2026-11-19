@@ -27,13 +27,13 @@ Use **Present → Start guided demo** for the Driver.js tour and **Speaker notes
 
 ## ChatGPT connection status
 
-**Use the [Vercel bridge](VERCEL_BRIDGE.md) for a new ChatGPT connection.** Its separate OAuth issuer supports dynamic client registration and routes consent through the existing Databricks App login. Hosted registration, consent, PKCE, five live tools, persisted MCP Events, refresh and revocation pass. The user's final ChatGPT browser connection is still awaiting confirmation. The direct Databricks OAuth failure below remains relevant only to the original connection path.
+**The [Vercel bridge](VERCEL_BRIDGE.md) is connected to ChatGPT.** On 19 November 2026, Laurent confirmed that ChatGPT called ShopiBricks and returned products. A read-only server check independently found an active ChatGPT OAuth grant and 14 recent authenticated MCP requests, separate from automated verification. Hosted registration, consent, PKCE, five live tools, persisted MCP Events, refresh and revocation also pass. The direct Databricks OAuth failure below remains relevant only to the original connection path.
 
-The first bridge browser attempt exposed a consent-page policy bug: Chrome submitted `Origin: null`, and the approval check displayed “Approval expired.” The policy now preserves same-origin form submissions, and hosted verification has a `--browser` mode to test the deployed document with real Chrome headers and cookies. Reconnect from ChatGPT to open a fresh consent page after this update.
+The first bridge browser attempt exposed a consent-page policy bug: Chrome submitted `Origin: null`, and the approval check displayed “Approval expired.” The policy now preserves same-origin form submissions, and hosted verification has a `--browser` mode to test the deployed document with real Chrome headers and cookies. The subsequent real ChatGPT connection succeeded.
 
-The MCP endpoint supports OAuth and publishes the personal workspace issuer. Server-side tool discovery and a real semantic-search tool call were verified using native Databricks OAuth. This does not establish that ChatGPT's OAuth client is accepted.
+The native Databricks MCP endpoint supports OAuth and publishes the personal workspace issuer. Server-side tool discovery and a real semantic-search tool call were verified using native Databricks OAuth. That direct endpoint's client-registration limitation remains separate from the working Vercel bridge.
 
-**ChatGPT browser linking failed on 19 November 2026.** The personal account rejected the default CIMD registration before any MCP tool could run:
+**Direct ChatGPT → Databricks browser linking failed on 19 November 2026.** The personal account rejected the default CIMD registration before any MCP tool could run:
 
 ```json
 {
@@ -67,7 +67,7 @@ Generated evidence is stored locally in `.local/deploy/shopibricks-personal/`. R
 - MLflow readback verified a persisted `OK` model/tool-call span in `workspace.shopibricks.agent_traces` for the successful shopper run.
 - Analytics reconciliation: 20,960 bronze events = 20,741 silver + 219 quarantine; gold has 20,741 events; zero invalid silver rows; 12 products and 2,500 fictional customers.
 - The bounded seed job completed and the pipeline returned to idle.
-- Direct ChatGPT browser linking failed with the registration error above. User browser linking through the verified Vercel bridge awaits confirmation. Lakebase-to-Delta CDC is unavailable; neither direct linking nor CDC is included in the successful checks.
+- ChatGPT browser linking and product retrieval through the Vercel bridge are confirmed by the user and active server-side grant/request records. Direct Databricks linking still fails with the registration error above. Lakebase-to-Delta CDC remains unavailable.
 
 ## Operate this target
 
