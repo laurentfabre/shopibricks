@@ -20,15 +20,18 @@ SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify
 SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:funnel
 SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:tour
 SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:presenter
+SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:journeys
 ```
 
 `verify`, `verify:atlas` and `verify:personas` run the current workspace suite with explicit API fixtures. They check clusters, query inspection and handoff, catalog/brand/channel views, data-source labeling, error recovery, downloads, profile/thread/cart isolation, and 1440/1024/768/390/320px layouts. They make no real model calls or database writes.
 
 `verify:funnel` checks empty bags, sold-out products, quantity limits, saved draft details, edits, validation, changed prices, expired quotes and stock conflicts using fixtures.
 
-`verify:tour` checks all 16 main tour steps on desktop and mobile, plus checkout/receipt guides, previous/next/exit behavior, focus restoration and unchanged checkout consent.
+`verify:tour` checks all 17 main tour steps on desktop and mobile, plus checkout/receipt guides, previous/next/exit behavior, focus restoration and unchanged checkout consent.
 
-`verify:presenter` checks the 13-stop presenter agenda, individual spotlights, expanded speaker notes on desktop and 320px mobile, talking-point copy/download, atlas loading/error/empty fallbacks, cancellation, view/focus restoration, and prompt preparation. It asserts that rehearsal makes no POST requests and preserves the shopper's bag and draft.
+`verify:presenter` checks the 14-stop presenter agenda, individual spotlights, expanded speaker notes on desktop and 320px mobile, talking-point copy/download, atlas loading/error/empty fallbacks, cancellation, view/focus restoration, and prompt preparation. It asserts that rehearsal makes no POST requests and preserves the shopper's bag and draft.
+
+`verify:journeys` checks correlated MCP activity, merchant shared-state navigation, CopilotKit inventory and saved-quote renderers, persona/thread separation, responsive layouts, changed prices, unavailable stock and quote expiry. Its API and model streams are fixtures.
 
 Artifacts go into ignored `tests/artifacts/` subdirectories. Tests use isolated headless Chrome; they do not attach to a presenter's browser or reuse its cookies.
 
@@ -40,7 +43,15 @@ For the personal Vercel OAuth/MCP bridge:
 app/.venv/bin/python -P scripts/verify_bridge.py --profile shopibricks-personal --browser
 ```
 
-This uses native Databricks SDK OAuth and isolated Chrome (with the `tests/` Playwright dependency installed). It renders the hosted consent document with its actual response headers, captures the browser-generated origin/cookie/form, and forwards that request through the native SDK. It then verifies the code exchange, all five read-only tools, persisted MCP Events, refresh and revocation. It does not visit ChatGPT's callback, reuse browser credentials, or create an order. The temporary bridge grant is revoked before exiting. Sanitized results go to ignored `.local/deploy/shopibricks-personal/verification-bridge.json`. Omitting `--browser` uses a simulated form submission and does not cover browser referrer-policy behavior.
+This uses native Databricks SDK OAuth and isolated Chrome (with the `tests/` Playwright dependency installed). It renders the hosted consent document with its actual response headers, captures the browser-generated origin/cookie/form, and forwards that request through the native SDK. It then verifies the code exchange, four read-only tools and the temporary saved-quote tool, authenticated quote restoration, persisted MCP events, refresh and revocation. It does not visit ChatGPT's callback, reuse browser credentials, or create an order. The temporary bridge grant is revoked before exiting. Sanitized results go to ignored `.local/deploy/shopibricks-personal/verification-bridge.json`. Omitting `--browser` uses a simulated form submission and does not cover browser referrer-policy behavior.
+
+For hosted CopilotKit and journey verification:
+
+```sh
+app/.venv/bin/python -P scripts/verify_journeys.py --profile shopibricks-personal
+```
+
+This verifies runtime discovery, real shopper/merchant model calls, MCP activity correlation, SSE replay, atlas ingestion and saved-quote continuation. It creates a temporary quote and incomplete draft, never confirms an order, and writes its report under ignored `.local/deploy/shopibricks-personal/`.
 
 `npm run verify:personas:live` targets a local app configured for the selected workspace. It makes two real profile-aware model requests, checks current catalog facts and persisted intent milestones, and does not place orders. Set `SHOPIBRICKS_TEST_URL` to the local app's origin.
 

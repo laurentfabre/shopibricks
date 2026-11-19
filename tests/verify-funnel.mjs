@@ -1,3 +1,4 @@
+import {fixtureTransport,agentRequest} from './copilot-fixtures.mjs';
 /** Controlled browser regressions for recovery paths; no model calls or database writes. */
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
@@ -14,13 +15,13 @@ function price(input, amount=1900){const checkout=structuredClone({...initial,..
 async function test(name,run){
  const context=await browser.newContext({viewport:{width:1440,height:950},reducedMotion:'reduce'});const page=await context.newPage();page.setDefaultTimeout(7000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const state={writes:[],checkout:price(initial),failure:null,price:1900};
- await page.route('**/api/**',async route=>{
+ await page.route('**/api/**',async route=>{if(await fixtureTransport(route))return;
   const req=route.request(),path=new URL(req.url()).pathname;const json=(body,status=200)=>route.fulfill({status,json:body});
   if(req.method()!=='GET')state.writes.push({path,body:req.postDataJSON()});
   if(path==='/api/products')return json({products});
   if(path==='/api/health')return json({database:'connected',gateway:'configured'});
   if(path==='/api/whoami')return json({label:'Funnel fixture'});
-  if(path==='/api/agent/run')return route.fulfill({contentType:'text/event-stream',body:[{type:'RUN_STARTED',runId:'fixture',threadId:'fixture'},{type:'CUSTOM',name:'shopibricks.ui',value:{kind:'checkout',checkout:state.checkout}},{type:'RUN_FINISHED'}].map(e=>`data: ${JSON.stringify(e)}\n\n`).join('')});
+  if((path==='/api/agent/run'||path.endsWith('/agent/default/run'))){const {runId,threadId}=agentRequest(route);return route.fulfill({contentType:'text/event-stream',body:[{type:'RUN_STARTED',runId,threadId},{type:'CUSTOM',name:'shopibricks.ui',value:{kind:'checkout',checkout:state.checkout}},{type:'RUN_FINISHED',runId,threadId}].map(e=>`data: ${JSON.stringify(e)}\n\n`).join('')});}
   if(path.endsWith('/complete')){
    if(state.failure==='stock')return json({...state.checkout,status:'not_ready_for_payment',messages:[{type:'error',content_type:'plain',code:'out_of_stock',content:'Atelier Notebook has 1 unit available.'}]});
    if(state.failure)return json({error:{code:state.failure,message:state.failure==='price_changed'?'The total changed. Review the updated checkout before confirming.':'Checkout expired. Create a new checkout to refresh the quote.'}},state.failure==='price_changed'?409:410);

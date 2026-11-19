@@ -1,5 +1,30 @@
 # Validation
 
+## CopilotKit and MCP journeys — November 19, 2026
+
+Verified on the **personal Free Edition** deployment, using the explicitly selected `shopibricks-personal` profile. Deployment `01f1e42d9c0b1a0997d85b3f6d06ff2c` started successfully. FEVM and emerging-hackathon were not redeployed for this update.
+
+| Check | Result |
+|---|---|
+| TypeScript application tests | 47 passed |
+| Python bridge tests | 8 passed |
+| CopilotKit and journey browser checks | 19 passed |
+| Atlas/persona browser regression | 61 passed |
+| Checkout recovery scenarios | 7 passed |
+| Presenter browser checks | 23 passed; all 14 stops on desktop and 320px mobile |
+| Guided tours | All 17 main steps on desktop and 320px mobile; checkout and receipt guides passed |
+| Production build and Databricks Apps validation | Passed |
+| Dependency audit | 0 reported vulnerabilities |
+| Hosted application checks | 24 passed, including matching production asset hashes |
+| Hosted CopilotKit and journey checks | 19 passed |
+| Hosted OAuth/MCP bridge checks | 32 passed, including isolated-browser consent |
+
+The hosted journey test used real GPT-OSS-120B responses: the shopper rendered product cards with a required inventory check; the merchant read account-scoped MCP evidence and opened Live journeys through AG-UI shared state. It also verified persisted event replay, correlated call outcomes, external search signals in the atlas, quote restoration, and idempotent continuation into an incomplete checkout draft. No order was confirmed and no product stock was changed.
+
+Browser tests use explicit fixtures and verify actual CopilotKit inventory/quote renderers, persona context and thread separation, merchant navigation, mobile layouts, changed prices, unavailable stock and expired quotes. The bridge integration test exercised the existing Vercel endpoint against the updated app, including a saved quote and authenticated continuation link; it revoked its temporary grant. These checks do not represent an automated ChatGPT UI session.
+
+CopilotKit `2.0.0-rc.44` is a pinned prerelease. The production build passes with a large-chunk warning (main JavaScript approximately 456 KB gzipped). See [implementation, demo steps and limitations](COPILOT_JOURNEYS.md). Reports and raw hosted events remain in ignored local paths.
+
 ## Presenter guide — November 17, 2026
 
 - 23 presenter browser checks passed: all 13 Driver.js highlights on desktop and 320px mobile, keyboard-operated speaker notes, copy/export, individual-step entry, loading cancellation, atlas error/empty fallbacks, and original view/focus/draft/bag restoration.

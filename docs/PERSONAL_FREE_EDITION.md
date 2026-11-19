@@ -60,7 +60,7 @@ Generated evidence is stored locally in `.local/deploy/shopibricks-personal/`. R
 
 - Production build, 27 TypeScript application tests and 13 Python tests passed. Gateway regressions cover preserved unified-route tool arguments, complete text delivery, unchanged native streaming and incomplete-response failure handling.
 - Original personal deployment `01f1e41416911465a4f01161fb6b8e2e` succeeded. Hosted app verification passed 21 checks, covering Lakebase, target bindings, CDC disclosure, production assets, presenter content, the 12-product catalog, 72 fictional atlas questions, clustering and filters, gold analytics, MCP discovery and hybrid search.
-- The Vercel bridge update adds a dedicated read-only relay, owner consent and persisted OAuth grants. Its browser-consent fix deployed as `01f1e4241ab116038b6592e5eab688e8`; all 30 hosted checks pass with real Chrome form headers and cookies. The expanded suite has 38 TypeScript tests and eight Python bridge tests; see the [bridge runbook](VERCEL_BRIDGE.md) for hosted evidence and connection steps.
+- The Vercel bridge update adds a dedicated commerce relay, owner consent and persisted OAuth grants. Its browser-consent fix deployed as `01f1e4241ab116038b6592e5eab688e8`; all 30 hosted checks pass with real Chrome form headers and cookies. The expanded suite has 38 TypeScript tests and eight Python bridge tests; see the [bridge runbook](VERCEL_BRIDGE.md) for hosted evidence and connection steps.
 - Shopper verification passed all eight checks: Noor's profile budget reached every specialist, a €227 camera/notebook/bottle kit rendered within €300, live stock was checked, and both intent insights and the activity atlas recorded the exact request and recommendation.
 - Sandbox checkout passed five checks: authoritative totals, address validation, idempotent confirmation, persisted receipt and exactly one inventory decrement.
 - Genie passed four checks: the merchant analyst invoked the personal space and returned generated SQL plus an executed query result.
@@ -99,3 +99,7 @@ app/.venv/bin/python -P scripts/deploy_workspace.py verify_data --target shopibr
 Agent and Genie checks invoke the real model. Checkout creates one fictional notebook order and decrements demo inventory once. `verify_data` reports `analytics_only` for this target and never claims CDC or Delta order replication.
 
 References: [Free Edition limitations](https://docs.databricks.com/aws/en/getting-started/free-edition-limitations), [OpenAI OAuth requirements](https://developers.openai.com/apps-sdk/build/auth), [Databricks AI-agent clients](https://docs.databricks.com/aws/en/partner-connect/ai-agents).
+
+## CopilotKit and saved quote handoff
+
+The personal app now includes the [shopper and merchant journey](COPILOT_JOURNEYS.md): CopilotKit shared state/tool rendering, live MCP outcomes, external tool-search signals in the atlas, and authenticated 30-minute quote continuations. No new Vercel deployment or Databricks account OAuth registration is required. The November 19 update passed 24 hosted application, 19 hosted journey and 32 hosted bridge checks; see the [current validation record](VALIDATION.md).

@@ -1,6 +1,6 @@
 # ShopiBricks — presenter talking points
 
-13 highlights · approximately 13 minutes of guided narration, plus live interactions.
+14 highlights · approximately 14 minutes of guided narration, plus live interactions.
 
 Open **Present → Start guided demo**. Choose any agenda stop to spotlight it or open its view. Speaker notes are optional and visible on a shared screen when enabled. The tour only navigates and highlights; submit prompts, change inventory and confirm sandbox orders yourself.
 
@@ -20,7 +20,7 @@ Open **Present → Start guided demo**. Choose any agenda stop to spotlight it o
 
 02 / UNDERSTAND DEMAND · 1:10
 
-**Say:** “Instead of reading a long list of queries, I can see the language shoppers share. The example corpus is fictional; My live activity contains questions captured for this account.”
+**Say:** “Instead of reading a long list of queries, I can see the language shoppers share. The example corpus is fictional; My live activity contains questions and MCP tool-search signals captured for this account.”
 
 **Show:** After leaving the spotlight, select a cluster, zoom in, and select a point. Point out the dataset label.
 
@@ -40,7 +40,19 @@ Open **Present → Start guided demo**. Choose any agenda stop to spotlight it o
 
 **If unavailable:** If there are no questions, switch to the labeled examples or create a real shopper question. No example traffic is counted as live activity.
 
-## 04. Better answers start with product facts.
+## 04. Watch ChatGPT become a real signal.
+
+02 / UNDERSTAND DEMAND · 1:30
+
+**Say:** “A shopper can start in ChatGPT. We see the product search, inventory check and quote as actual tool events. These are search arguments, not the shopper’s full private conversation.”
+
+**Show:** In ChatGPT, select ShopiBricks Personal Bridge and request a weekend kit, live stock and a quote with a continuation link. Return here and inspect the calls. Open the saved quote in ShopiBricks using the same account.
+
+**Evidence:** Call IDs correlate start and outcome. The saved quote rechecks price and stock and expires in 30 minutes. A quote does not reserve inventory or create an order.
+
+**If unavailable:** If ChatGPT needs reconnection, use the in-app concierge. Name the source shown on each event; do not relabel storefront calls as ChatGPT.
+
+## 05. Better answers start with product facts.
 
 03 / PREPARE THE EXPERIENCE · 0:45
 
@@ -52,7 +64,7 @@ Open **Present → Start guided demo**. Choose any agenda stop to spotlight it o
 
 **If unavailable:** If the catalog cannot load, show the error and avoid quoting stale stock or prices.
 
-## 05. Change the voice. Keep the facts.
+## 06. Change the voice. Keep the facts.
 
 03 / PREPARE THE EXPERIENCE · 0:45
 
@@ -64,7 +76,7 @@ Open **Present → Start guided demo**. Choose any agenda stop to spotlight it o
 
 **If unavailable:** Use the visible preview as a template demonstration. Do not present it as a model-generated response.
 
-## 06. The same collection, a different person.
+## 07. The same collection, a different person.
 
 04 / MAKE IT PERSONAL · 1:00
 
@@ -76,19 +88,19 @@ Open **Present → Start guided demo**. Choose any agenda stop to spotlight it o
 
 **If unavailable:** Use the profile descriptions if the catalog is loading. Do not describe seeded history as observed customer behavior.
 
-## 07. Specialists work from current facts.
+## 08. Specialists work from current facts.
 
 05 / SHOW THE AGENTS · 0:45
 
 **Say:** “The model chooses tools and delegates work. The specialists retrieve data rather than inventing availability or a final checkout amount.”
 
-**Show:** Point out the five specialists. During a real request, watch activity change, then inspect the recorded calls in Developer studio.
+**Show:** Point out the five specialists and the stock-check cards. CopilotKit drives the interface through AG-UI; the model and commerce tools remain in Databricks.
 
 **Evidence:** The roster is a status display. Actual tool and handoff events in the protocol timeline are the execution evidence.
 
 **If unavailable:** If no run is active, explain the roles without claiming that a tool has just executed.
 
-## 08. Ask for a complete, constrained selection.
+## 09. Ask for a complete, constrained selection.
 
 05 / SHOW THE AGENTS · 1:30
 
@@ -104,7 +116,7 @@ Open **Present → Start guided demo**. Choose any agenda stop to spotlight it o
 
 > Choose a Paris weekend kit with wireless audio and a bag, maximum €250 total. Check current stock and show product cards. Do not prepare checkout.
 
-## 09. The final decision belongs to the shopper.
+## 10. The final decision belongs to the shopper.
 
 06 / KEEP THE SHOPPER IN CONTROL · 1:00
 
@@ -116,7 +128,7 @@ Open **Present → Start guided demo**. Choose any agenda stop to spotlight it o
 
 **If unavailable:** An empty bag is a valid starting point. Add a product manually; do not claim an order exists before confirmation.
 
-## 10. Connect the action to operational truth.
+## 11. Connect the action to operational truth.
 
 07 / FOLLOW THE DATA · 1:00
 
@@ -128,7 +140,7 @@ Open **Present → Start guided demo**. Choose any agenda stop to spotlight it o
 
 **If unavailable:** If there is no new order, use the inventory view. Do not attribute historical totals to this demo run.
 
-## 11. Know which signals are synthetic.
+## 12. Know which signals are synthetic.
 
 07 / FOLLOW THE DATA · 1:00
 
@@ -140,7 +152,7 @@ Open **Present → Start guided demo**. Choose any agenda stop to spotlight it o
 
 **If unavailable:** If the emitter is stopped, read the displayed timestamp and call this the last processed dataset, not a live stream.
 
-## 12. Show the actual execution.
+## 13. Show the actual execution.
 
 08 / MAKE IT INSPECTABLE · 1:10
 
@@ -152,15 +164,15 @@ Open **Present → Start guided demo**. Choose any agenda stop to spotlight it o
 
 **If unavailable:** An empty timeline means no visible activity is available. Run a shopper question or label a previously recorded trace with its date.
 
-## 13. Be precise about channel readiness.
+## 14. Be precise about channel readiness.
 
 09 / CLOSE THE LOOP · 0:45
 
-**Say:** “The result is a connected native commerce journey—from intent to a reviewed decision. External distribution is a separate integration and onboarding step.”
+**Say:** “The result is a connected native commerce journey—from intent to a reviewed decision. The ChatGPT MCP bridge connects discovery and saved quotes. Native ChatGPT commerce checkout still requires separate merchant onboarding.”
 
-**Show:** Show ShopiBricks as available, then select ChatGPT and read its outstanding prerequisites. Close on the full shopper-to-merchant story.
+**Show:** Show ShopiBricks as available, then select ChatGPT and read the configured or observed MCP status. Close on the full shopper-to-merchant story.
 
-**Evidence:** The ACP-shaped sandbox is not merchant approval. External platforms are not connected, and exporting a feed does not publish it.
+**Evidence:** The ACP-shaped sandbox is not merchant approval. A connected MCP tool does not confer commerce merchant approval, and exporting a feed does not publish it.
 
 **If unavailable:** Keep the native storefront as the demonstrated outcome. Do not imply that a product is purchasable inside an external assistant.
 

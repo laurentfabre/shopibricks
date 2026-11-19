@@ -136,7 +136,7 @@ export async function readExperienceEvents(owner:string){
  await initialize();
  const {rows}=await getPool().query(`SELECT payload FROM shopibricks.protocol_events
    WHERE owner=$1 AND created_at>now()-interval '24 hours'
-   AND (kind IN ('RUN_ERROR','RUN_FINISHED') OR payload->>'name' IN ('shopibricks.context','shopibricks.ui','shopibricks.gap'))
+   AND (kind IN ('RUN_ERROR','RUN_FINISHED') OR payload->>'name' IN ('shopibricks.context','shopibricks.ui','shopibricks.gap','shopibricks.mcp','shopibricks.quote'))
    ORDER BY id DESC LIMIT 5001`,[owner]);
  return {events:rows.slice(0,5000).reverse().map(row=>row.payload as ProtocolEvent),truncated:rows.length>5000};
 }

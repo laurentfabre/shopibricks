@@ -1,3 +1,4 @@
+import {activityCalls} from '../shared/activity.js';
 import type {Product,ProtocolEvent} from './types.js';
 import {experienceSchema} from './experience.js';
 import {extractEuroBudget} from './product-ui.js';
@@ -41,12 +42,17 @@ export function activityQueries(events:ProtocolEvent[]):QuerySignal[]{
   if(!parsed.success||parsed.data.persona!=='shopper')continue;
   // Prior deployments did not store the prompt in this event. Never invent it from the intent label.
   if(typeof value.query!=='string'||!value.query.trim())continue;
-  queries.set(event.runId,{id:event.runId,text:value.query.slice(0,3000),profile:parsed.data.profile,channel:parsed.data.channel,budget:typeof value.budget_cents==='number'?value.budget_cents:undefined,at:event.timestamp,observed:{recommended:false,draft:false,gap:false,failed:false}});
+  queries.set(event.runId,{id:event.runId,text:value.query.slice(0,3000),profile:parsed.data.profile,channel:parsed.data.channel,provenance:'shopper_prompt',budget:typeof value.budget_cents==='number'?value.budget_cents:undefined,at:event.timestamp,observed:{recommended:false,draft:false,gap:false,failed:false}});
  }
  for(const event of events){const query=event.runId?queries.get(event.runId):undefined;if(!query?.observed)continue;
   if(event.name==='shopibricks.gap')query.observed.gap=true;
   if(event.type==='RUN_ERROR')query.observed.failed=true;
   if(event.name==='shopibricks.ui'&&event.value&&typeof event.value==='object'){const value=event.value as {kind?:string;products?:unknown[]};if(value.kind==='products'&&Array.isArray(value.products)&&value.products.length)query.observed.recommended=true;if(value.kind==='checkout')query.observed.draft=true;}
+ }
+ for(const call of activityCalls(events)){
+  // ChatGPT only exposes tool arguments, not the original prompt or a fictional profile.
+  if(call.channel==='storefront'||call.phase==='started'||!call.query?.trim())continue;
+  queries.set(call.call_id,{id:call.call_id,text:call.query,channel:call.channel,provenance:'tool_search',at:call.timestamp});
  }
  return [...queries.values()].sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,180);
 }
@@ -74,7 +80,7 @@ export function buildAtlas(signals:QuerySignal[],products:Product[],options:{sou
   const label=keywords.slice(0,2).map(w=>w[0].toUpperCase()+w.slice(1)).join(' & ')||'Other questions';
   return [{id:`cluster-${index}`,label,keywords,count:members.length,matched:members.filter(q=>q.status==='matched').length,gaps:members.filter(q=>q.status!=='matched').length,productIds:[...new Set(members.flatMap(q=>q.status==='matched'?q.matches.map(m=>m.id):[]))]}];
  }).sort((a,b)=>b.count-a.count||a.id.localeCompare(b.id));
- return {source:options.source,sourceLabel:options.source==='examples'?'Fictional example queries':'Your recorded shopper questions',as_of:new Date().toISOString(),latest_at:signals.some(q=>q.at)?new Date(Math.max(...signals.map(q=>q.at||0))).toISOString():null,period:options.source==='examples'?'Curated example corpus':'Last 24 hours',truncated:options.truncated||false,queries,clusters,
+ return {source:options.source,sourceLabel:options.source==='examples'?'Fictional example queries':'Your recorded shopper questions and MCP search signals',as_of:new Date().toISOString(),latest_at:signals.some(q=>q.at)?new Date(Math.max(...signals.map(q=>q.at||0))).toISOString():null,period:options.source==='examples'?'Curated example corpus':'Last 24 hours',truncated:options.truncated||false,queries,clusters,
   summary:{queries:queries.length,clusters:clusters.length,matched:queries.filter(q=>q.status==='matched').length,gaps:queries.filter(q=>q.status!=='matched').length,products:products.length},
   method:'Queries are grouped using deterministic spherical k-means over TF-IDF terms with a small synonym dictionary. Product matching uses cosine similarity ≥ 0.12 plus current price and stock. Scores are lexical relevance, not probabilities. Graph positions are a D3 layout, not an embedding projection. Match counts are catalog coverage estimates, not observed recommendations, purchases or conversion rates.'};
 }

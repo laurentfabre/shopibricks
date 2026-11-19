@@ -11,7 +11,8 @@
     "verify:personas:live": "node verify-experience-live.mjs",
     "verify:atlas": "node verify-atlas.mjs",
     "verify:legacy": "node verify-browser.mjs",
-    "verify:presenter": "node verify-presenter.mjs"
+    "verify:presenter": "node verify-presenter.mjs",
+    "verify:journeys": "node verify-journeys.mjs"
   },
   "devDependencies": {
     "playwright": "1.65.0-alpha-2026-11-02"

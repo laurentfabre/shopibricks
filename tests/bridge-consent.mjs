@@ -25,7 +25,7 @@ async function main(){
    return route.abort();
   });
   await page.goto(consent.url);
-  await page.getByRole('button',{name:'Allow read-only access',exact:true}).click();
+  await page.getByRole('button',{name:'Allow catalog, inventory and temporary quote access',exact:true}).click();
   const form=await Promise.race([submission,new Promise((_,reject)=>{const timer=setTimeout(()=>reject(new Error('Form submission timed out')),10000);timer.unref();})]);
   process.stdout.write(JSON.stringify(form));
  }finally{await browser.close();}

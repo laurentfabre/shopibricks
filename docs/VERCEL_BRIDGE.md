@@ -10,7 +10,7 @@ The personal demo has a separate OAuth issuer on Vercel. This avoids asking Data
 
 1. In ChatGPT, enable developer mode if needed, then create a **new** custom app named **ShopiBricks Personal Bridge**.
 2. Enter the MCP URL above and select **OAuth**. Select **Dynamic client registration (DCR)** if a registration-method choice appears. Leave client ID and client secret empty. Do not reuse the old Databricks client ID or the previous failed connector.
-3. When redirected to Databricks, sign in as **laurent.fabre@gmail.com**. On the ShopiBricks consent screen, choose **Allow read-only access**.
+3. When redirected to Databricks, sign in as **laurent.fabre@gmail.com**. On the ShopiBricks consent screen, choose **Allow catalog, inventory and temporary quote access**.
 4. Return to ChatGPT, enable the new app in the conversation, and ask:
 
    > Use ShopiBricks to build a Paris weekend kit under €250, including an audio product and a bag. Search the catalog, check live inventory, and quote the kit. Do not place an order.
@@ -38,7 +38,7 @@ sequenceDiagram
     V->>A: Native SDK M2M relay
     A->>L: Validate and persist grant
     V-->>C: Bridge access and refresh credentials
-    C->>V: Read-only MCP request
+    C->>V: Commerce MCP request
     V->>A: Authenticated relay
     A->>L: Tool call and owner-scoped MCP event
     V-->>C: Tool result
@@ -52,7 +52,7 @@ The dedicated `shopibricks-vercel-bridge` principal has **CAN_USE on the persona
 |---|---|
 | `search_products` | Authoritative 12-product Lakebase catalog and prices |
 | `get_inventory` | Current stock and freshness |
-| `quote_cart` | Price calculation without creating an order |
+| `quote_cart` | Save a 30-minute quote and authenticated app continuation link, without creating an order |
 | `semantic_search` | Hybrid retrieval from the governed product index |
 | `get_merchant_metrics` | Lakebase operational data and Lakehouse aggregates |
 
@@ -62,7 +62,7 @@ ACP checkout stays in the ShopiBricks app and requires human confirmation. The b
 
 - “ChatGPT is calling the same live commerce tools as the storefront.”
 - “The stock and prices come from Lakebase; semantic search uses the governed Databricks index.”
-- “Consent grants five read-only tools. A quote does not create an order.”
+- “Consent grants four read-only tools and temporary quote storage. A quote does not create an order.”
 - “Here is the actual MCP event persisted for my account. The bridge changes how ChatGPT connects; the data and tool execution remain in Databricks.”
 - Continue in the storefront with a persona, the question-clustering atlas, and the guided presenter tour. Complete sandbox ACP checkout there to demonstrate the separate confirmation boundary.
 
@@ -110,7 +110,7 @@ For initial provisioning, the helper phases are `audit`, `project`, `principal`,
 
 ## Verification and troubleshooting
 
-Local verification: **38 TypeScript tests**, **8 Python bridge tests**, and the production build pass. **30 hosted checks pass with `--browser`**, covering Chrome's actual consent origin and secure cookie, registration, PKCE, one-use codes, exact read-only discovery, all five tools, persisted MCP Events, refresh and revocation. The existing App also passes its **21 hosted regression checks**. Sanitized reports live under ignored `.local/deploy/shopibricks-personal/`.
+Verified on November 19 with the CopilotKit journey update: **47 TypeScript tests**, **8 Python bridge tests**, and the production build pass. **32 hosted checks pass with `--browser`**, covering Chrome's actual consent origin and secure cookie, registration, PKCE, one-use codes, bounded tool discovery, all five tools, saved quotes and authenticated restoration, persisted MCP events, refresh and revocation. The app also passes **24 hosted regression checks** and **19 hosted CopilotKit/journey checks**. See [validation details](VALIDATION.md). Sanitized reports live under ignored `.local/deploy/shopibricks-personal/`.
 
 `--browser` requires Google Chrome and the Playwright dependency installed by `npm --prefix tests ci`. It renders the deployed consent HTML and response headers in isolated Chrome, then forwards the browser-generated form, origin and cookie through the native Databricks SDK. It does not read browser credentials or visit ChatGPT's callback. Without this option the verifier supplies the origin/cookie itself, which cannot detect browser-policy regressions.
 
@@ -125,3 +125,7 @@ The initial browser approval failed because `Referrer-Policy: no-referrer` made 
 - **429:** the demo caps registration at 30/hour, token exchanges at 200/client/hour, and MCP requests at 120/grant per ten minutes. Wait for the window to expire.
 
 Direct ChatGPT → Databricks OAuth remains a separate blocked path, documented in [PERSONAL_FREE_EDITION.md](PERSONAL_FREE_EDITION.md). FEVM and emerging-hackathon deployments are unchanged.
+
+## Continue the conversation in the app
+
+The [CopilotKit journey](COPILOT_JOURNEYS.md) adds **Live journeys** for the merchant and saved quote links for the shopper. `quote_cart` is now accurately marked as a non-destructive write because it persists a temporary selection. Refresh ChatGPT’s tool list if it still shows the older description. CopilotKit is embedded in ShopiBricks; the Vercel endpoint and existing OAuth connection stay the same.

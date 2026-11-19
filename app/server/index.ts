@@ -15,8 +15,12 @@ import { readExperienceEvents, publicUrl } from './db.js';
 import { agentInputSchema, catalogFeed, catalogReadiness, summarizeIntents } from './experience.js';
 import { profiles, channels } from '../shared/experience.js';
 import { exampleQueries } from '../shared/intelligence.js';
+import {activityCalls} from '../shared/activity.js';
 import { activityQueries, buildAtlas } from './intelligence.js';
 import {bridgeRouter,restrictBridgePrincipal} from './bridge.js';
+import {streamEvents} from './event-stream.js';
+import {copilotMiddleware} from './copilot.js';
+import {getQuote,loadQuote,quoteIdSchema,resolveQuote} from './quotes.js';
 
 const app=express();app.disable('x-powered-by');
 app.use(express.json({limit:'100kb'}));
@@ -37,8 +41,9 @@ app.use(['/api','/checkout_sessions','/mcp'],(req,res,next)=>{
  res.locals.identity=identity(req,res);next();
 });
 app.use(['/checkout_sessions','/api/checkout'],(req,res,next)=>{res.setHeader('Request-Id',req.get('Request-Id')||randomUUID());if(req.get('Idempotency-Key'))res.setHeader('Idempotency-Key',req.get('Idempotency-Key')!);next();});
+app.use('/api/copilotkit',copilotMiddleware);
 app.get('/api/whoami',(req,res)=>res.json({...res.locals.identity,execution_identity:'App service principal for shared synthetic commerce data'}));
-app.get('/api/health',wrap(async(_req,res)=>{let database='unavailable';let error:string|undefined;try{await initialize();await getPool().query('SELECT 1');database='connected';}catch(e){error=e instanceof Error?e.message:'Connection failed';}res.json({name:'ShopiBricks',database,error,gateway:lastGatewaySuccess?'verified':'configured',last_gateway_success:lastGatewaySuccess,model:process.env.SHOPIBRICKS_MODEL,workspace:process.env.DATABRICKS_HOST,mode:'sandbox',lakebase_cdc:process.env.SHOPIBRICKS_CDC_ENABLED==='false'?'unavailable':'configured',stream_job_id:process.env.SHOPIBRICKS_STREAM_JOB_ID,pipeline_id:process.env.SHOPIBRICKS_PIPELINE_ID,experiment_id:process.env.MLFLOW_EXPERIMENT_ID,vector_index:process.env.SHOPIBRICKS_VECTOR_INDEX,genie_space_id:process.env.SHOPIBRICKS_GENIE_SPACE_ID,acp:'sandbox · merchant onboarding required',mcp:'Streamable HTTP',generative_ui:'AG-UI',timestamp:new Date().toISOString()});}));
+app.get('/api/health',wrap(async(_req,res)=>{let database='unavailable';let error:string|undefined;try{await initialize();await getPool().query('SELECT 1');database='connected';}catch(e){error=e instanceof Error?e.message:'Connection failed';}res.json({name:'ShopiBricks',database,error,gateway:lastGatewaySuccess?'verified':'configured',last_gateway_success:lastGatewaySuccess,model:process.env.SHOPIBRICKS_MODEL,workspace:process.env.DATABRICKS_HOST,mode:'sandbox',lakebase_cdc:process.env.SHOPIBRICKS_CDC_ENABLED==='false'?'unavailable':'configured',stream_job_id:process.env.SHOPIBRICKS_STREAM_JOB_ID,pipeline_id:process.env.SHOPIBRICKS_PIPELINE_ID,experiment_id:process.env.MLFLOW_EXPERIMENT_ID,vector_index:process.env.SHOPIBRICKS_VECTOR_INDEX,genie_space_id:process.env.SHOPIBRICKS_GENIE_SPACE_ID,acp:'sandbox · merchant onboarding required',mcp:'Streamable HTTP',generative_ui:'CopilotKit + AG-UI',mcp_bridge_configured:!!process.env.SHOPIBRICKS_BRIDGE_URL,timestamp:new Date().toISOString()});}));
 app.get('/api/products',wrap(async(req,res)=>{const query=z.string().max(100).parse(req.query.q||'');res.json({products:await products(query),source:'Lakebase · shopibricks.products',as_of:new Date().toISOString()});}));
 app.get('/api/catalog/readiness',wrap(async(_req,res)=>res.json({...catalogReadiness(await products()),source:'Lakebase · shopibricks.products',as_of:new Date().toISOString()})));
 app.get('/api/catalog/feed',wrap(async(_req,res)=>{res.setHeader('Content-Disposition','attachment; filename="shopibricks-catalog.json"');res.json(catalogFeed(await products(),publicUrl()));}));
@@ -48,17 +53,33 @@ app.get('/api/insights',wrap(async(req,res)=>{
  res.json({...summarizeIntents(events,filters),truncated,source:'Lakebase · shopibricks.protocol_events',scope:'Your activity · last 24 hours',as_of:new Date().toISOString()});
 }));
 app.get('/api/intelligence',wrap(async(req,res)=>{
- const input=z.object({source:z.enum(['examples','activity']).default('examples'),clusters:z.coerce.number().int().min(3).max(8).default(6),profile:z.enum(profiles.map(p=>p.id)).optional(),channel:z.enum(channels.map(c=>c.id)).optional()}).parse(req.query);
+ const input=z.object({source:z.enum(['examples','activity']).default('examples'),clusters:z.coerce.number().int().min(3).max(8).default(6),profile:z.enum(profiles.map(p=>p.id)).optional(),channel:z.enum([...channels.map(c=>c.id),'chatgpt','mcp']).optional()}).parse(req.query);
  const [catalog,recorded]=await Promise.all([products(),input.source==='activity'?readExperienceEvents(res.locals.identity.owner):Promise.resolve({events:[],truncated:false})]);
  const all=input.source==='examples'?exampleQueries():activityQueries(recorded.events);
  const signals=all.filter(q=>(!input.profile||q.profile===input.profile)&&(!input.channel||q.channel===input.channel));
- const captured=recorded.events.filter(e=>e.name==='shopibricks.context'&&typeof (e.value as {query?:unknown}|undefined)?.query==='string').length;
+ const captured=recorded.events.filter(e=>e.name==='shopibricks.context'&&typeof (e.value as {query?:unknown}|undefined)?.query==='string').length+activityCalls(recorded.events).filter(c=>c.channel!=='storefront'&&c.phase!=='started'&&c.query?.trim()).length;
  res.json(buildAtlas(signals,catalog,{source:input.source,clusters:input.clusters,truncated:recorded.truncated||captured>180}));
 }));
 app.get('/api/operations',wrap(async(_req,res)=>res.json(await operations())));
 app.get('/api/orders/:id',wrap(async(req,res)=>{await initialize();const {rows}=await getPool().query('SELECT c.data FROM shopibricks.orders o JOIN shopibricks.checkouts c ON c.id=o.checkout_id WHERE o.id=$1 AND o.owner=$2',[req.params.id,res.locals.identity.owner]);if(!rows[0])throw new CommerceError(404,'not_found','Order not found.');res.json(rows[0].data);}));
 app.get('/api/lakehouse',wrap(async(req,res)=>res.json(await lakehouseMetrics(req.query.refresh==='1'))));
 app.get('/api/events',wrap(async(req,res)=>{const after=z.coerce.number().int().nonnegative().parse(req.query.after||0);res.json({events:await readEvents(res.locals.identity.owner,after,typeof req.query.runId==='string'?req.query.runId:undefined)});}));
+app.get('/api/events/stream',wrap(streamEvents));
+app.get('/api/quotes/:id',wrap(async(req,res)=>res.json(await getQuote(quoteIdSchema.parse(req.params.id),res.locals.identity.owner))));
+app.post('/api/quotes/:id/continue',wrap(async(req,res)=>{
+ const id=quoteIdSchema.parse(req.params.id),owner=res.locals.identity.owner;
+ z.object({reviewed:z.literal(true)}).strict().parse(req.body);
+ const saved=await loadQuote(id,owner);
+ const checkout=await idempotent(owner,req.get('Idempotency-Key'),`quote:${id}`,req.body,201,async c=>{
+  const {rows}=await c.query('SELECT * FROM shopibricks.products WHERE id=ANY($1::text[]) ORDER BY id FOR UPDATE',[saved?.items.map(i=>i.id)||[]]);
+  const current=resolveQuote(saved,owner,rows);
+  if(!current.available)throw new CommerceError(409,'out_of_stock','Some items are no longer available. Refresh the quote to review stock.');
+  const draft=await createCheckout(c,owner,{items:current.items});
+  const event={type:'CUSTOM',name:'shopibricks.quote',timestamp:Date.now(),value:{phase:'checkout_started',quote_id:id,checkout_id:draft.id,channel:saved!.channel}};
+  await c.query('INSERT INTO shopibricks.protocol_events(owner,kind,payload) VALUES($1,$2,$3)',[owner,event.type,JSON.stringify(event)]);
+  return draft;
+ });res.status(201).json(checkout);
+}));
 app.post('/api/agent/run',wrap(async(req,res)=>{
  const input=agentInputSchema.parse(req.body);
  await initialize();const owner=res.locals.identity.owner;
@@ -105,10 +126,9 @@ app.post('/api/demo/scenario',wrap(async(req,res)=>{
 }));
 app.post('/api/demo/start-stream',wrap(async(_req,res)=>res.json(await gateway({action:'job'}))));
 app.post('/mcp',wrap(async(req,res)=>{
- const server=commerceMcp();const transport=new StreamableHTTPServerTransport({sessionIdGenerator:undefined,enableJsonResponse:true});
+ const server=commerceMcp({owner:res.locals.identity.owner,channel:'mcp',transport:'Streamable HTTP'});const transport=new StreamableHTTPServerTransport({sessionIdGenerator:undefined,enableJsonResponse:true});
  res.on('close',()=>{void transport.close();void server.close();});
  await server.connect(transport);await transport.handleRequest(req,res,req.body);
- if(req.body?.method==='tools/call')await protocolEvent(res.locals.identity.owner,{type:'CUSTOM',name:'shopibricks.mcp',timestamp:Date.now(),value:{method:req.body.method,tool:req.body.params?.name,transport:'Streamable HTTP',server:'shopibricks-commerce'}});
 }));
 app.get('/mcp',(_req,res)=>res.status(405).json({jsonrpc:'2.0',error:{code:-32000,message:'This stateless MCP server uses POST Streamable HTTP.'},id:null}));
 app.get('/legal/:page',(_req,res)=>res.type('html').send('<!doctype html><html><title>ShopiBricks sandbox policies</title><body style="font:18px system-ui;max-width:720px;margin:80px auto;line-height:1.8"><h1>ShopiBricks is a demonstration.</h1><p>All catalog and commerce data is synthetic. Orders never collect payment, send email, ship products or create a commercial contract. Use fictional contact details only. Demo conversations and protocol events are stored in the dedicated Databricks Lakebase database for presentation and debugging. This demo is not an approved ChatGPT commerce merchant.</p><a href="/">Back to ShopiBricks</a></body></html>'));

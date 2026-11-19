@@ -1,6 +1,6 @@
 import type {ChannelId,ProfileId} from './experience';
 
-export type QuerySignal={id:string;text:string;profile:ProfileId;channel:ChannelId;budget?:number;at?:number;observed?:{recommended:boolean;draft:boolean;gap:boolean;failed:boolean}};
+export type QuerySignal={id:string;text:string;profile?:ProfileId;channel:ChannelId|'chatgpt'|'mcp';provenance?:'shopper_prompt'|'tool_search';budget?:number;at?:number;observed?:{recommended:boolean;draft:boolean;gap:boolean;failed:boolean}};
 export type MatchStatus='matched'|'uncovered'|'budget'|'stock';
 export type ProductMatch={id:string;score:number;terms:string[]};
 export type AtlasQuery=QuerySignal&{cluster:string;matches:ProductMatch[];status:MatchStatus;reason:string};

@@ -148,7 +148,7 @@ def verify(profile, browser=False):
         check(external("/mcp", expected=405).headers["allow"] == "POST", "Stateless transport correctly declines an SSE connection")
         tools = rpc("tools/list")["tools"]
         names = {t["name"] for t in tools}
-        check(names == {"search_products", "get_inventory", "quote_cart", "get_merchant_metrics", "semantic_search"} and all(t["annotations"]["readOnlyHint"] for t in tools), "Discovery exposes exactly five read-only tools")
+        check(names == {"search_products", "get_inventory", "quote_cart", "get_merchant_metrics", "semantic_search"} and all(t["annotations"]["readOnlyHint"] == (t["name"] != "quote_cart") for t in tools), "Discovery exposes five bounded tools and marks temporary quote storage as a write")
         products = tool("search_products", {"query": ""})["products"]
         check(len(products) == 12, "Bridge returns the real 12-product demo catalog")
         sku = products[0]["id"]
@@ -156,6 +156,9 @@ def verify(profile, browser=False):
         check(stock[0]["id"] == sku and isinstance(stock[0]["stock"], int), "Inventory comes from the current Lakebase product row")
         quote = tool("quote_cart", {"items": [{"id": sku, "quantity": 1}]})
         check(any(total["type"] == "total" and total["amount"] == products[0]["price_cents"] for total in quote["totals"]), "Quote uses the authoritative price without creating an order")
+        check(quote.get("quote_id", "").startswith("q_") and quote.get("continuation_url", "").startswith(app_url + "/?quote="), "Quote provides an authenticated app continuation link")
+        restored = native("/api/quotes/" + quote["quote_id"])
+        check(restored["items"] == [{"id": sku, "quantity": 1}] and restored["channel"] == "chatgpt", "ChatGPT quote restores the exact selection for the authenticated owner")
         vector = tool("semantic_search", {"query": "wireless audio for a Paris weekend"})
         check(bool(vector["result"]["data_array"]), "Semantic retrieval returns actual governed index rows")
         metrics = tool("get_merchant_metrics", {})
