@@ -7,7 +7,8 @@ Target: `shopibricks-personal`, authenticated as `laurent.fabre@gmail.com` throu
 | Surface | URL |
 |---|---|
 | App | https://shopibricks-personal-7474650310803801.aws.databricksapps.com |
-| MCP | https://shopibricks-personal-7474650310803801.aws.databricksapps.com/mcp |
+| ChatGPT MCP bridge | https://shopibricks-mcp-personal.vercel.app/mcp |
+| Native Databricks MCP | https://shopibricks-personal-7474650310803801.aws.databricksapps.com/mcp |
 | Catalog | https://dbc-c3e48176-204b.cloud.databricks.com/explore/data/workspace/shopibricks |
 | Dashboard | https://dbc-c3e48176-204b.cloud.databricks.com/dashboardsv3/01f1e40f7bc41d07971441babc33a8f4/published |
 | Genie | https://dbc-c3e48176-204b.cloud.databricks.com/genie/rooms/01f1e41066631003be685a123e2f2aa8 |
@@ -26,6 +27,8 @@ Use **Present → Start guided demo** for the Driver.js tour and **Speaker notes
 
 ## ChatGPT connection status
 
+**Use the [Vercel bridge](VERCEL_BRIDGE.md) for a new ChatGPT connection.** Its separate OAuth issuer supports dynamic client registration and routes consent through the existing Databricks App login. Hosted registration, consent, PKCE, five live tools, persisted MCP Events, refresh and revocation pass. The user's final ChatGPT browser connection is still awaiting confirmation. The direct Databricks OAuth failure below remains relevant only to the original connection path.
+
 The MCP endpoint supports OAuth and publishes the personal workspace issuer. Server-side tool discovery and a real semantic-search tool call were verified using native Databricks OAuth. This does not establish that ChatGPT's OAuth client is accepted.
 
 **ChatGPT browser linking failed on 19 November 2026.** The personal account rejected the default CIMD registration before any MCP tool could run:
@@ -37,13 +40,13 @@ The MCP endpoint supports OAuth and publishes the personal workspace issuer. Ser
 }
 ```
 
-This is an OAuth client-registration blocker, not a missing ShopiBricks permission. Deploying to Free Edition did not resolve it. Do not present the ChatGPT connection as working.
+This is an OAuth client-registration blocker, not a missing ShopiBricks permission. Deploying to Free Edition did not resolve the direct connection. The Vercel bridge uses a separate issuer; do not conflate its verification with direct ChatGPT → Databricks OAuth.
 
 The personal authorization server advertises CIMD and PKCE, but does not advertise `authorization_response_iss_parameter_supported`. The failed ChatGPT request uses a connector-specific client metadata URL. Manually entering `https://chatgpt.com/oauth/client.json` is not a general fix: its published callback is `https://chatgpt.com/connector_platform_oauth_redirect`, which differs from connector-specific callbacks and already caused a redirect mismatch on the earlier workspace.
 
 The [public metadata for this failed connection](https://chatgpt.com/oauth/1oVCjn0ai9gl/client.json) was retrieved successfully and lists `https://chatgpt.com/connector/oauth/1oVCjn0ai9gl` as its redirect URI. This confirms the metadata exists, but does not make that client available in the Databricks account.
 
-Databricks documents AI-assistant OAuth controls and custom client registration at the **account** level. Free Edition has no account console or account-level APIs, so there is no supported self-service registration fix here. Resolving this browser connector requires Databricks/OpenAI compatibility changes or a standard Databricks account whose account administrator can register a client with the exact callback shown by ChatGPT. The native ShopiBricks storefront, sandbox ACP checkout and authenticated MCP tool discovery remain usable.
+Databricks documents AI-assistant OAuth controls and custom client registration at the **account** level. Free Edition has no account console or account-level APIs, so there is no supported self-service registration fix here. Resolving the direct browser connector requires Databricks/OpenAI compatibility changes or a standard Databricks account whose account administrator can register a client with the exact callback shown by ChatGPT. The Vercel bridge is an alternative connection path. The native ShopiBricks storefront, sandbox ACP checkout and authenticated MCP tool discovery remain usable.
 
 For a rehearsal now, open **Protocol studio → Discover live MCP tools**, then run the shopper prompt and inspect its actual tool events. This demonstrates the real MCP implementation inside the app; it does not demonstrate a ChatGPT connection. ChatGPT's native checkout is also a separate merchant-onboarding integration.
 
@@ -54,14 +57,15 @@ References: [Databricks OAuth application controls](https://docs.databricks.com/
 Generated evidence is stored locally in `.local/deploy/shopibricks-personal/`. Resource inventory is `docs/deployment.shopibricks-personal.json`; both are ignored by Git.
 
 - Production build, 27 TypeScript application tests and 13 Python tests passed. Gateway regressions cover preserved unified-route tool arguments, complete text delivery, unchanged native streaming and incomplete-response failure handling.
-- Final deployment `01f1e41416911465a4f01161fb6b8e2e` succeeded. Hosted app verification passed 21 checks, covering Lakebase, target bindings, CDC disclosure, production assets, presenter content, the 12-product catalog, 72 fictional atlas questions, clustering and filters, gold analytics, MCP discovery and hybrid search.
+- Original personal deployment `01f1e41416911465a4f01161fb6b8e2e` succeeded. Hosted app verification passed 21 checks, covering Lakebase, target bindings, CDC disclosure, production assets, presenter content, the 12-product catalog, 72 fictional atlas questions, clustering and filters, gold analytics, MCP discovery and hybrid search.
+- The Vercel bridge update deployed as `01f1e41ed8151010914721b50a1a051a`. It adds a dedicated read-only relay, owner consent and persisted OAuth grants. The expanded suite has 38 TypeScript tests and eight Python bridge tests; see the [bridge runbook](VERCEL_BRIDGE.md) for hosted evidence and connection steps.
 - Shopper verification passed all eight checks: Noor's profile budget reached every specialist, a €227 camera/notebook/bottle kit rendered within €300, live stock was checked, and both intent insights and the activity atlas recorded the exact request and recommendation.
 - Sandbox checkout passed five checks: authoritative totals, address validation, idempotent confirmation, persisted receipt and exactly one inventory decrement.
 - Genie passed four checks: the merchant analyst invoked the personal space and returned generated SQL plus an executed query result.
 - MLflow readback verified a persisted `OK` model/tool-call span in `workspace.shopibricks.agent_traces` for the successful shopper run.
 - Analytics reconciliation: 20,960 bronze events = 20,741 silver + 219 quarantine; gold has 20,741 events; zero invalid silver rows; 12 products and 2,500 fictional customers.
 - The bounded seed job completed and the pipeline returned to idle.
-- ChatGPT browser linking failed with the registration error above. Lakebase-to-Delta CDC is unavailable; neither capability is included in the successful checks.
+- Direct ChatGPT browser linking failed with the registration error above. User browser linking through the verified Vercel bridge awaits confirmation. Lakebase-to-Delta CDC is unavailable; neither direct linking nor CDC is included in the successful checks.
 
 ## Operate this target
 

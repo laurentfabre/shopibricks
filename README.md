@@ -14,6 +14,7 @@ The hosted demo requires access to its Databricks workspace. This public reposit
 - **Shopper:** four fictional profiles—Camille, Alex, Léa and Noor—with separate bags and conversations, profile-aware discovery, travel and gifting specialists, and explicit checkout approval.
 - **Brand and catalog:** live product dossiers, completeness checks, an internal catalog feed, and editorial, concise and playful brand voices.
 - **Developer:** inspect AG-UI events, MCP tools, agent handoffs, gateway status and ACP-shaped sandbox checkout.
+- **ChatGPT bridge:** a Vercel OAuth/MCP endpoint connects to the personal demo with owner consent and five read-only tools. See the [connection steps, verification and demo talking points](docs/VERCEL_BRIDGE.md). Hosted OAuth and tools pass; final linking in the user's ChatGPT account awaits confirmation.
 - **Operations:** live inventory and sandbox orders, plus clearly labeled synthetic streaming analytics.
 
 The copilot is toggleable, the workspace adapts to mobile, and Driver.js tours connect the shopper, merchant and developer journeys.

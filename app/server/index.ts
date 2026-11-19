@@ -16,10 +16,13 @@ import { agentInputSchema, catalogFeed, catalogReadiness, summarizeIntents } fro
 import { profiles, channels } from '../shared/experience.js';
 import { exampleQueries } from '../shared/intelligence.js';
 import { activityQueries, buildAtlas } from './intelligence.js';
+import {bridgeRouter,restrictBridgePrincipal} from './bridge.js';
 
 const app=express();app.disable('x-powered-by');
 app.use(express.json({limit:'100kb'}));
 app.use((req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('Cache-Control','no-store');next();});
+app.use(restrictBridgePrincipal);
+app.use('/bridge',bridgeRouter());
 function identity(req:Request,res:Response){
  const email=req.get('x-forwarded-email');const user=email||req.get('x-forwarded-user');
  if(user)return{owner:createHash('sha256').update(user).digest('hex'),label:email||user,mode:'Databricks authenticated user'};

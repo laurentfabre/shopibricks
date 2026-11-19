@@ -46,6 +46,11 @@ class Deployment:
         return self.cli("api", method, path, payload=payload)
 
     def save(self):
+        # The Vercel helper owns bridge_* fields and may finish while an App
+        # deployment is waiting. Preserve its latest deployment metadata.
+        if self.inventory_path.exists():
+            latest = json.loads(self.inventory_path.read_text())
+            self.inventory.update({key: value for key, value in latest.items() if key.startswith("bridge_")})
         self.inventory_path.write_text(json.dumps(self.inventory, indent=2) + "\n")
 
     def sql(self, statement):
@@ -245,6 +250,13 @@ class Deployment:
                 item["value"] = str(replacements[item["name"]])
         manifest["env"].append({"name": "SHOPIBRICKS_GATEWAY_API", "value": self.config.get("gateway_api", "native")})
         manifest["env"].append({"name": "SHOPIBRICKS_CDC_ENABLED", "value": str(self.config.get("cdc_enabled", True)).lower()})
+        if inv.get("bridge_url"):
+            for name, value in {
+                "SHOPIBRICKS_BRIDGE_URL": inv["bridge_url"],
+                "SHOPIBRICKS_BRIDGE_PRINCIPALS": ",".join([inv["bridge_principal_id"], inv["bridge_client_id"]]),
+                "SHOPIBRICKS_BRIDGE_USERS": self.config["expected_user"],
+            }.items():
+                manifest["env"].append({"name": name, "value": value})
         serialized = yaml.safe_dump(manifest, sort_keys=False)
         if "serverless_stable_vwywqi_catalog" in serialized or "7474645565734606" in serialized:
             raise ValueError("Source-workspace binding remains in target manifest")
