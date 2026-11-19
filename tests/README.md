@@ -34,6 +34,14 @@ Artifacts go into ignored `tests/artifacts/` subdirectories. Tests use isolated 
 
 ## Real integrations
 
+For the personal Vercel OAuth/MCP bridge:
+
+```sh
+app/.venv/bin/python -P scripts/verify_bridge.py --profile shopibricks-personal --browser
+```
+
+This uses native Databricks SDK OAuth and isolated Chrome (with the `tests/` Playwright dependency installed). It renders the hosted consent document with its actual response headers, captures the browser-generated origin/cookie/form, and forwards that request through the native SDK. It then verifies the code exchange, all five read-only tools, persisted MCP Events, refresh and revocation. It does not visit ChatGPT's callback, reuse browser credentials, or create an order. The temporary bridge grant is revoked before exiting. Sanitized results go to ignored `.local/deploy/shopibricks-personal/verification-bridge.json`. Omitting `--browser` uses a simulated form submission and does not cover browser referrer-policy behavior.
+
 `npm run verify:personas:live` targets a local app configured for the selected workspace. It makes two real profile-aware model requests, checks current catalog facts and persisted intent milestones, and does not place orders. Set `SHOPIBRICKS_TEST_URL` to the local app's origin.
 
 For the configured hosted FEVM demo, run from the repository root:

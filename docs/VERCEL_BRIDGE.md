@@ -92,7 +92,7 @@ app/.venv/bin/python -P scripts/deploy_bridge.py status --vercel-env-file ../.en
 app/.venv/bin/python -P scripts/deploy_workspace.py deploy --target shopibricks-personal
 
 # Test the real OAuth flow and tools; the temporary grant is revoked afterwards.
-app/.venv/bin/python -P scripts/verify_bridge.py --profile shopibricks-personal
+app/.venv/bin/python -P scripts/verify_bridge.py --profile shopibricks-personal --browser
 ```
 
 Rotate the machine secret without displaying or manually copying it:
@@ -101,7 +101,7 @@ Rotate the machine secret without displaying or manually copying it:
 app/.venv/bin/python -P scripts/deploy_bridge.py environment --rotate-secret --vercel-env-file ../.env
 app/.venv/bin/python -P scripts/deploy_bridge.py deploy --vercel-env-file ../.env
 app/.venv/bin/python -P scripts/deploy_bridge.py status --vercel-env-file ../.env
-app/.venv/bin/python -P scripts/verify_bridge.py --profile shopibricks-personal
+app/.venv/bin/python -P scripts/verify_bridge.py --profile shopibricks-personal --browser
 ```
 
 Wait for `READY` before verifying. Updating Vercel environment variables alone does not update an existing deployment. The prior seven-day secret expires naturally, preserving a short rollback window. To disable the entire bridge immediately, remove this dedicated principal's `CAN_USE` permission from the personal App. Bridge `/revoke` invalidates an individual grant; grants also expire after eight hours.
@@ -110,11 +110,16 @@ For initial provisioning, the helper phases are `audit`, `project`, `principal`,
 
 ## Verification and troubleshooting
 
-Local verification: **38 TypeScript tests**, **8 Python bridge tests**, and the production build pass. The **28 hosted bridge checks** exercise registration, owner consent, PKCE, one-use codes, exact read-only discovery, all five tools, persisted MCP Events, refresh and revocation. The existing App also passes its **21 hosted regression checks**. Sanitized reports live under ignored `.local/deploy/shopibricks-personal/`.
+Local verification: **38 TypeScript tests**, **8 Python bridge tests**, and the production build pass. **30 hosted checks pass with `--browser`**, covering Chrome's actual consent origin and secure cookie, registration, PKCE, one-use codes, exact read-only discovery, all five tools, persisted MCP Events, refresh and revocation. The existing App also passes its **21 hosted regression checks**. Sanitized reports live under ignored `.local/deploy/shopibricks-personal/`.
+
+`--browser` requires Google Chrome and the Playwright dependency installed by `npm --prefix tests ci`. It renders the deployed consent HTML and response headers in isolated Chrome, then forwards the browser-generated form, origin and cookie through the native Databricks SDK. It does not read browser credentials or visit ChatGPT's callback. Without this option the verifier supplies the origin/cookie itself, which cannot detect browser-policy regressions.
+
+The initial browser approval failed because `Referrer-Policy: no-referrer` made Chrome submit `Origin: null`. The strict approval-origin check rejected it, and the previous generic error incorrectly said “Approval expired.” The consent policy now uses `same-origin`, preserving the origin check while suppressing referrers to ChatGPT. Fixed diagnostic references distinguish origin, form, session and grant failures without logging credentials.
 
 - **Databricks reports the old ChatGPT client ID:** check the connector URL. It must be the Vercel `/mcp`, and the connection must use DCR rather than the previous manually configured client.
 - **Access unavailable on consent:** use the allowlisted Gmail identity, not a different Databricks login.
-- **Approval expired:** restart connection; consent and codes are deliberately short-lived.
+- **Approval expired:** close the old consent page and reconnect from ChatGPT; consent and codes are deliberately short-lived.
+- **Approval could not be verified / Approval session changed:** note the fixed `Reference` shown on the page (`origin`, `form`, `session` or `grant`). Reconnect from ChatGPT in the same browser. Do not refresh an old approval POST.
 - **503 backend unavailable:** check the App is running, the machine secret has not expired, and the principal retains App access. Run the hosted verifier. No native credentials are exposed in public errors.
 - **401 after an extended demo:** connect again after the eight-hour grant expires.
 - **429:** the demo caps registration at 30/hour, token exchanges at 200/client/hour, and MCP requests at 120/grant per ten minutes. Wait for the window to expire.

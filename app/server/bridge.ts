@@ -52,7 +52,10 @@ export function bridgeRouter(){
  const router=express.Router(),issuer=process.env.SHOPIBRICKS_BRIDGE_URL;
  if(!issuer){router.use((_req,res)=>res.status(404).json({error:'Bridge is not configured'}));return router;}
  const oauth=new BridgeOAuth(issuer,bridgeStore);
- router.use((_req,res,next)=>{res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://chatgpt.com; frame-ancestors 'none'; base-uri 'none'");next();});
+ // A no-referrer document policy makes browser form POSTs send Origin: null.
+ // same-origin retains our consent-origin check and suppresses cross-origin
+ // referrers when redirecting back to ChatGPT.
+ router.use((_req,res,next)=>{res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','same-origin');res.setHeader('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://chatgpt.com; frame-ancestors 'none'; base-uri 'none'");next();});
  // Machine requests always return a JSON envelope so the native Databricks SDK can
  // preserve OAuth/JSON-RPC status without exposing native authentication material.
  router.post('/relay',async(req,res)=>{
@@ -79,15 +82,25 @@ export function bridgeRouter(){
   }catch(e){res.status(e instanceof BridgeError?e.status:503).type('html').send(page('<h1>Connection unavailable</h1><p>The authorization request is invalid or expired. Return to ChatGPT and start again.</p>'));}
  });
  router.post('/approve',express.urlencoded({extended:false,limit:'8kb'}),async(req,res)=>{
+  let stage:'origin'|'form'|'session'|'grant'='origin';
   try{
    if(req.get('origin')!==new URL(publicUrl()).origin)throw new BridgeError('invalid_request','Invalid approval origin');
+   stage='form';
    const p=z.object({request:z.string().regex(/^[A-Za-z0-9_-]{43}$/),csrf:z.string().regex(/^[A-Za-z0-9_-]{43}$/),decision:z.enum(['allow','deny'])}).parse(req.body);
+   stage='session';
    const cookie=(req.get('cookie')||'').match(/(?:^|;\s*)__Secure-shopibricks_bridge=([A-Za-z0-9_-]{43})(?:;|$)/)?.[1];
    if(cookie!==p.csrf)throw new BridgeError('invalid_request','Approval session changed');
+   stage='grant';
    const redirect=await oauth.approve(p.request,p.csrf,res.locals.bridgeOwner,p.decision==='allow');
    res.clearCookie('__Secure-shopibricks_bridge',{secure:true,httpOnly:true,sameSite:'lax',path:'/bridge'});
    res.redirect(303,redirect);
-  }catch{res.status(400).type('html').send(page('<h1>Approval expired</h1><p>Return to ChatGPT and start the connection again.</p>'));}
+  }catch(e){
+   // Record only a fixed stage and error category, never forms, codes, cookies,
+   // user identity or native SDK error messages.
+   console.warn(JSON.stringify({event:'bridge.approval_rejected',stage,error:e instanceof BridgeError?e.code:'request_failed'}));
+   const title=stage==='grant'&&e instanceof BridgeError?'Approval expired':stage==='session'?'Approval session changed':'Approval could not be verified';
+   res.status(400).type('html').send(page(`<h1>${title}</h1><p>Return to ChatGPT and start the connection again in this browser.</p><small>Reference: ${stage}</small>`));
+  }
  });
  return router;
 }

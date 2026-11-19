@@ -29,6 +29,8 @@ Use **Present → Start guided demo** for the Driver.js tour and **Speaker notes
 
 **Use the [Vercel bridge](VERCEL_BRIDGE.md) for a new ChatGPT connection.** Its separate OAuth issuer supports dynamic client registration and routes consent through the existing Databricks App login. Hosted registration, consent, PKCE, five live tools, persisted MCP Events, refresh and revocation pass. The user's final ChatGPT browser connection is still awaiting confirmation. The direct Databricks OAuth failure below remains relevant only to the original connection path.
 
+The first bridge browser attempt exposed a consent-page policy bug: Chrome submitted `Origin: null`, and the approval check displayed “Approval expired.” The policy now preserves same-origin form submissions, and hosted verification has a `--browser` mode to test the deployed document with real Chrome headers and cookies. Reconnect from ChatGPT to open a fresh consent page after this update.
+
 The MCP endpoint supports OAuth and publishes the personal workspace issuer. Server-side tool discovery and a real semantic-search tool call were verified using native Databricks OAuth. This does not establish that ChatGPT's OAuth client is accepted.
 
 **ChatGPT browser linking failed on 19 November 2026.** The personal account rejected the default CIMD registration before any MCP tool could run:
@@ -58,7 +60,7 @@ Generated evidence is stored locally in `.local/deploy/shopibricks-personal/`. R
 
 - Production build, 27 TypeScript application tests and 13 Python tests passed. Gateway regressions cover preserved unified-route tool arguments, complete text delivery, unchanged native streaming and incomplete-response failure handling.
 - Original personal deployment `01f1e41416911465a4f01161fb6b8e2e` succeeded. Hosted app verification passed 21 checks, covering Lakebase, target bindings, CDC disclosure, production assets, presenter content, the 12-product catalog, 72 fictional atlas questions, clustering and filters, gold analytics, MCP discovery and hybrid search.
-- The Vercel bridge update deployed as `01f1e41ed8151010914721b50a1a051a`. It adds a dedicated read-only relay, owner consent and persisted OAuth grants. The expanded suite has 38 TypeScript tests and eight Python bridge tests; see the [bridge runbook](VERCEL_BRIDGE.md) for hosted evidence and connection steps.
+- The Vercel bridge update adds a dedicated read-only relay, owner consent and persisted OAuth grants. Its browser-consent fix deployed as `01f1e4241ab116038b6592e5eab688e8`; all 30 hosted checks pass with real Chrome form headers and cookies. The expanded suite has 38 TypeScript tests and eight Python bridge tests; see the [bridge runbook](VERCEL_BRIDGE.md) for hosted evidence and connection steps.
 - Shopper verification passed all eight checks: Noor's profile budget reached every specialist, a €227 camera/notebook/bottle kit rendered within €300, live stock was checked, and both intent insights and the activity atlas recorded the exact request and recommendation.
 - Sandbox checkout passed five checks: authoritative totals, address validation, idempotent confirmation, persisted receipt and exactly one inventory decrement.
 - Genie passed four checks: the merchant analyst invoked the personal space and returned generated SQL plus an executed query result.

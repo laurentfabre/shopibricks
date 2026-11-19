@@ -12,6 +12,7 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import secrets
+import subprocess
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlencode, urlsplit
 
@@ -31,13 +32,13 @@ class ConsentForm(HTMLParser):
             self.fields[fields["name"]] = fields.get("value", "")
 
 
-def verify(profile):
+def verify(profile, browser=False):
     root = Path(__file__).resolve().parents[1]
     inventory = json.loads((root / "docs/deployment.shopibricks-personal.json").read_text())
     app_url, bridge = inventory["app_url"].rstrip("/"), inventory["bridge_url"]
     resource = bridge + "/mcp"
     client = WorkspaceClient(config=Config(profile=profile, http_timeout_seconds=100, retry_timeout_seconds=1))
-    report = {"bridge_url": bridge, "checked_at": datetime.now(timezone.utc).isoformat(), "checks": [], "passed": False}
+    report = {"bridge_url": bridge, "checked_at": datetime.now(timezone.utc).isoformat(), "browser_consent": browser, "checks": [], "passed": False}
     session = requests.Session()
     credentials, client_id = None, None
 
@@ -57,10 +58,14 @@ def verify(profile):
         # The SDK owns native OAuth. Disable only HTTP redirect following so a
         # test grant never travels to ChatGPT's real callback.
         original = requests.Session.request
+        consent_cookies = []
 
         def no_redirect(instance, *args, **options):
             options["allow_redirects"] = False
-            return original(instance, *args, **options)
+            response = original(instance, *args, **options)
+            if response.url.startswith(app_url + "/bridge/authorize"):
+                consent_cookies.extend(value for value in response.raw.headers.getlist("Set-Cookie") if value.startswith("__Secure-shopibricks_bridge="))
+            return response
 
         with patch.object(requests.Session, "request", no_redirect):
             result = client.api_client.do(method, url=app_url + path, **kwargs)
@@ -70,6 +75,11 @@ def verify(profile):
                 result["text"] = stream.read().decode()
             finally:
                 stream.close()
+        if consent_cookies:
+            # requests joins multiple Set-Cookie fields with commas. Replaying
+            # that combined field in Chrome corrupts cookie attributes. Keep
+            # only the App's consent cookie, separate from ingress cookies.
+            result["set-cookie"] = "\n".join(consent_cookies)
         return result
 
     def rpc(method, params=None):
@@ -99,14 +109,30 @@ def verify(profile):
         query = {"client_id": client_id, "redirect_uri": callback, "response_type": "code", "code_challenge": challenge, "code_challenge_method": "S256", "state": state, "resource": resource, "scope": "shopibricks:read"}
         redirect = external("/authorize", expected=302, params=query)
         check(redirect.headers["location"] == app_url + "/bridge/authorize?" + urlencode(query), "Authorization redirects only to the personal Databricks App")
-        consent = native("/bridge/authorize", query=query, raw=True, response_headers=["set-cookie", "content-security-policy"])
+        consent = native("/bridge/authorize", query=query, raw=True, response_headers=["set-cookie", "content-security-policy", "referrer-policy"])
         form = ConsentForm()
         form.feed(consent["text"])
         check(set(form.fields) == {"request", "csrf"} and "laurent.fabre@gmail.com" in consent["text"], "Authenticated owner receives consent with a browser-bound CSRF challenge")
         check("form-action 'self' https://chatgpt.com;" in consent.get("content-security-policy", ""), "Consent policy permits the approved browser callback to ChatGPT")
         cookie = "__Secure-shopibricks_bridge=" + form.fields["csrf"]
         check(cookie in consent.get("set-cookie", ""), "Approval cookie matches the consent session")
-        approved = native("/bridge/approve", "POST", data=urlencode({**form.fields, "decision": "allow"}), headers={"Content-Type": "application/x-www-form-urlencoded", "Origin": app_url, "Cookie": cookie}, raw=True, response_headers=["location"])
+        if browser:
+            rendered = subprocess.run(
+                ["node", str(root / "tests/bridge-consent.mjs")],
+                input=json.dumps({"url": app_url + "/bridge/authorize?" + urlencode(query), "html": consent["text"], "headers": {"content-type": "text/html", **{key: consent[key] for key in ("set-cookie", "content-security-policy", "referrer-policy") if consent.get(key)}}}),
+                capture_output=True, text=True, timeout=45,
+            )
+            if rendered.returncode:
+                raise AssertionError("Isolated Chrome could not submit the hosted consent document")
+            submission = json.loads(rendered.stdout)
+            check(submission["headers"]["Origin"] == app_url, "Chrome's real consent submission preserves the App origin")
+            if cookie not in submission["headers"]["Cookie"]:
+                report["browser_cookie_metadata"] = submission.get("cookie_metadata", [])
+                print(json.dumps({"browser_cookie_metadata": report["browser_cookie_metadata"]}), flush=True)
+            check(cookie in submission["headers"]["Cookie"], "Chrome stores and submits the secure consent cookie")
+        else:
+            submission = {"body": urlencode({**form.fields, "decision": "allow"}), "headers": {"Content-Type": "application/x-www-form-urlencoded", "Origin": app_url, "Cookie": cookie}}
+        approved = native("/bridge/approve", "POST", data=submission["body"], headers=submission["headers"], raw=True, response_headers=["location"])
         location = approved.get("location") or ""
         parsed = urlsplit(location)
         values = parse_qs(parsed.query)
@@ -166,5 +192,6 @@ def verify(profile):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile", required=True, choices=["shopibricks-personal"])
+    parser.add_argument("--browser", action="store_true", help="Submit the hosted consent document using real isolated Chrome headers and cookie behavior")
     args = parser.parse_args()
-    raise SystemExit(0 if verify(args.profile) else 1)
+    raise SystemExit(0 if verify(args.profile, browser=args.browser) else 1)

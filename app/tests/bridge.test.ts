@@ -88,7 +88,8 @@ test('Dedicated bridge identity reaches the relay but cannot use ordinary app ro
   await new Promise<void>((resolve,reject)=>{server.once('listening',resolve);server.once('error',reject);});
   const address=server.address();assert.ok(address&&typeof address==='object');
   const base=`http://127.0.0.1:${address.port}`;
-  for(const headers of [{'x-forwarded-user':'bridge-numeric-id'},{'x-forwarded-email':'bridge-client-id'}]){
+  const identities:Array<Record<string,string>>=[{'x-forwarded-user':'bridge-numeric-id'},{'x-forwarded-email':'bridge-client-id'}];
+  for(const headers of identities){
    assert.equal((await fetch(base+'/bridge/relay',{method:'POST',headers})).status,200);
    for(const path of ['/api/checkout','/checkout_sessions','/api/scenarios','/mcp'])assert.equal((await fetch(base+path,{method:'POST',headers})).status,403);
   }
