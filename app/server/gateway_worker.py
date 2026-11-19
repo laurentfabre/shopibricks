@@ -33,16 +33,31 @@ def main(request):
             except Exception as exc:
                 emit({"type": "diagnostic", "source": "mlflow", "status": "configuration_failed", **safe_failure(exc)})
         if _client is None:
-            _client = DatabricksOpenAI(use_ai_gateway_native_api=True, timeout=85, max_retries=1)
+            api = os.environ.get("SHOPIBRICKS_GATEWAY_API", "native")
+            if api not in ("native", "mlflow"):
+                raise ValueError("SHOPIBRICKS_GATEWAY_API must be native or mlflow")
+            _client = DatabricksOpenAI(use_ai_gateway_native_api=api == "native", use_ai_gateway=api == "mlflow", timeout=85, max_retries=1)
         completed = None
         failed = None
-        for event in _client.responses.create(**request, stream=True):
-            if event.type == "response.output_text.delta":
-                emit({"type": "delta", "delta": event.delta})
-            elif event.type == "response.completed":
-                completed = event.response.model_dump()
-            elif event.type in ("response.failed", "response.incomplete", "error"):
-                failed = event.model_dump()
+        if os.environ.get("SHOPIBRICKS_GATEWAY_API", "native") == "mlflow":
+            # The unified route can omit function arguments in every streamed
+            # event, including response.completed. Non-streaming preserves them.
+            # Deliver actual completed text in one chunk; do not simulate tokens.
+            response = _client.responses.create(**request, stream=False)
+            if response.status == "completed":
+                completed = response.model_dump()
+                if response.output_text:
+                    emit({"type": "delta", "delta": response.output_text})
+            else:
+                failed = response.model_dump()
+        else:
+            for event in _client.responses.create(**request, stream=True):
+                if event.type == "response.output_text.delta":
+                    emit({"type": "delta", "delta": event.delta})
+                elif event.type == "response.completed":
+                    completed = event.response.model_dump()
+                elif event.type in ("response.failed", "response.incomplete", "error"):
+                    failed = event.model_dump()
         # Autolog finalizes the span only when its stream wrapper is exhausted.
         # Do not release this worker for another request before that point.
         if _tracing is not None:

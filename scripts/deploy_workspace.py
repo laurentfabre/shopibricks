@@ -67,6 +67,8 @@ class Deployment:
     def audit(self):
         report = {"profile": self.profile, "host": self.config["host"], "catalog": self.config["catalog"]}
         report["identity"] = self.cli("current-user", "me")["userName"]
+        if self.config.get("expected_user") and report["identity"] != self.config["expected_user"]:
+            raise ValueError("The selected profile is signed in as a different user")
         report["catalog_info"] = self.cli("catalogs", "get", self.config["catalog"])
         report["catalog_grants"] = self.cli("grants", "get", "catalog", self.config["catalog"])
         report["schemas"] = [x["name"] for x in self.cli("schemas", "list", self.config["catalog"])]
@@ -106,6 +108,12 @@ class Deployment:
             self.cli("apps", "create", "--no-compute", "--no-wait", payload={"name": self.config["app_name"], "description": "ShopiBricks · OpenAI · synthetic multi-persona commerce and intent atlas"})
             print("App identity created without starting compute", flush=True)
         app = self.cli("apps", "get", self.config["app_name"])
+        deadline = time.monotonic() + 120
+        while not app.get("service_principal_client_id") or not app.get("url"):
+            if time.monotonic() > deadline:
+                raise TimeoutError("App identity provisioning exceeded two minutes")
+            time.sleep(3)
+            app = self.cli("apps", "get", self.config["app_name"])
         self.inventory.update(app_service_principal=app["service_principal_client_id"], app_url=app["url"])
         self.save()
 
@@ -161,7 +169,8 @@ class Deployment:
         os.environ["DATABRICKS_CONFIG_PROFILE"] = self.profile
         os.environ["DATABRICKS_HOST"] = self.config["host"]
         from databricks_openai import DatabricksOpenAI
-        client = DatabricksOpenAI(use_ai_gateway_native_api=True, timeout=60, max_retries=1)
+        unified = self.config.get("gateway_api", "native") == "mlflow"
+        client = DatabricksOpenAI(use_ai_gateway=unified, use_ai_gateway_native_api=not unified, timeout=60, max_retries=1)
         response = client.responses.create(model=self.config["model"], input="Reply only with: ShopiBricks target ready.", max_output_tokens=128)
         if response.status != "completed" or not response.output_text:
             raise RuntimeError(f"Target Responses API did not complete: {response.status}")
@@ -178,6 +187,7 @@ class Deployment:
             proof[dataset["name"]] = {"statement_id": result["statement_id"], "rows": result.get("manifest", {}).get("total_row_count")}
         payload = json.loads((ROOT / "resources/genie.json").read_text().replace(source_ns, self.ns))
         payload["warehouse_id"] = self.config["warehouse_id"]
+        payload["parent_path"] = self.config.get("genie_parent_path", payload["parent_path"])
         self.cli("workspace", "mkdirs", payload["parent_path"])
         space = json.loads(payload["serialized_space"])
         for example in space.get("instructions", {}).get("example_question_sqls", []):
@@ -233,6 +243,8 @@ class Deployment:
             if item["name"] in replacements:
                 item.pop("valueFrom", None)
                 item["value"] = str(replacements[item["name"]])
+        manifest["env"].append({"name": "SHOPIBRICKS_GATEWAY_API", "value": self.config.get("gateway_api", "native")})
+        manifest["env"].append({"name": "SHOPIBRICKS_CDC_ENABLED", "value": str(self.config.get("cdc_enabled", True)).lower()})
         serialized = yaml.safe_dump(manifest, sort_keys=False)
         if "serverless_stable_vwywqi_catalog" in serialized or "7474645565734606" in serialized:
             raise ValueError("Source-workspace binding remains in target manifest")
@@ -240,6 +252,8 @@ class Deployment:
         print(json.dumps({"staged_app": str(dest), "host": self.config["host"], "namespace": self.ns}), flush=True)
 
     def cdc(self):
+        if not self.config.get("cdc_enabled", True):
+            raise RuntimeError("Lakebase CDC is unavailable for this target's Default Storage catalog")
         database = self.inventory["lakebase_database"]
         try:
             configs = self.cli("postgres", "list-cdf-configs", database)
@@ -305,11 +319,15 @@ class Deployment:
         assert int(counts["silver"]) == int(counts["gold"]), counts
         assert int(counts["invalid_silver"]) == 0 and int(counts["products"]) == 12 and int(counts["customers"]) == 2500, counts
         assert int(counts["bronze"]) > 20000 and int(counts["quarantine"]) > 0, counts
-        statuses = self.cli("postgres", "list-cdf-statuses", self.inventory["cdf_config"])
-        assert len(statuses) == 7 and all(item["state"] == "CDF_STATE_STREAMING" for item in statuses), statuses
-        report = {"passed": True, "counts": counts, "statement_id": result["statement_id"], "cdc": statuses}
+        cdc_enabled = self.config.get("cdc_enabled", True)
+        statuses = self.cli("postgres", "list-cdf-statuses", self.inventory["cdf_config"]) if cdc_enabled else []
+        if cdc_enabled:
+            assert len(statuses) == 7 and all(item["state"] == "CDF_STATE_STREAMING" for item in statuses), statuses
+        report = {"passed": True, "scope": "analytics_and_cdc" if cdc_enabled else "analytics_only", "counts": counts, "statement_id": result["statement_id"], "cdc": statuses, "cdc_enabled": cdc_enabled}
+        if not cdc_enabled:
+            report["limitation"] = "Lakebase CDC is not supported with this workspace's Default Storage; no Delta order replication was verified."
         checkout_file = self.out / "verification-checkout.json"
-        if checkout_file.exists():
+        if checkout_file.exists() and cdc_enabled:
             order = json.loads(checkout_file.read_text())["order"]
             order_id = order["order"]["id"]
             assert all(character.isalnum() or character in "_-" for character in order_id)
@@ -355,7 +373,7 @@ class Deployment:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("phase", choices=["audit", "bootstrap", "infrastructure", "status", "bindings", "vector", "traces", "modelcheck", "analytics", "configure", "stage", "deploy", "cdc", "finish", "verify_data", "start", "stop"])
-    parser.add_argument("--target", required=True, choices=["emerging-hackathon"])
+    parser.add_argument("--target", required=True, choices=["emerging-hackathon", "shopibricks-personal"])
     parser.add_argument("--minutes", type=int, default=60)
     options = parser.parse_args()
     deployment = Deployment(options.target)

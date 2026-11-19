@@ -1,0 +1,19 @@
+{
+  "profile": "shopibricks-personal",
+  "host": "https://dbc-c3e48176-204b.cloud.databricks.com",
+  "expected_user": "laurent.fabre@gmail.com",
+  "catalog": "workspace",
+  "schema": "shopibricks",
+  "warehouse_id": "3fac3372847e91cd",
+  "app_name": "shopibricks-personal",
+  "lakebase_project": "shopibricks-personal",
+  "vector_endpoint": "shopibricks-personal",
+  "embedding_endpoint": "databricks-gte-large-en",
+  "model_endpoint": "databricks-gpt-oss-120b",
+  "model": "system.ai.gpt-oss-120b",
+  "gateway_api": "mlflow",
+  "cdc_enabled": false,
+  "genie_parent_path": "/Workspace/Users/laurent.fabre@gmail.com",
+  "source_code_path": "/Workspace/Users/laurent.fabre@gmail.com/shopibricks-personal-app",
+  "experiment_name": "/Shared/ShopiBricks-Personal-Traces"
+}

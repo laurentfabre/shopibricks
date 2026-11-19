@@ -25,3 +25,12 @@ targets:
       catalog: openai
       schema: shopibricks
       warehouse_id: 009278ac015663b9
+  shopibricks-personal:
+    workspace:
+      host: https://dbc-c3e48176-204b.cloud.databricks.com
+      profile: shopibricks-personal
+      root_path: /Workspace/Users/laurent.fabre@gmail.com/.bundle/shopibricks-paris/shopibricks-personal
+    variables:
+      catalog: workspace
+      schema: shopibricks
+      warehouse_id: 3fac3372847e91cd

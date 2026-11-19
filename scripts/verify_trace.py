@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("trace_id")
 parser.add_argument("start_ms", type=int)
 parser.add_argument("end_ms", type=int)
-parser.add_argument("--target", required=True, choices=["fevm", "emerging-hackathon"])
+parser.add_argument("--target", required=True, choices=["fevm", "emerging-hackathon", "shopibricks-personal"])
 args = parser.parse_args()
 if args.target == "fevm":
     config = {"profile": "fevm", "host": "https://fevm-serverless-stable-vwywqi.cloud.databricks.com", "warehouse_id": "05f329bec7bdb08b", "catalog": "serverless_stable_vwywqi_catalog", "schema": "shopibricks_laurent"}

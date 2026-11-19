@@ -20,11 +20,12 @@ from databricks.sdk.core import Config
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("phase", choices=["app", "agent", "genie", "checkout"])
-parser.add_argument("--target", required=True, choices=["emerging-hackathon"])
+parser.add_argument("--target", required=True, choices=["emerging-hackathon", "shopibricks-personal"])
 args = parser.parse_args()
 config = json.loads((ROOT / "deployments" / f"{args.target}.json").read_text())
 inventory = json.loads((ROOT / "docs" / f"deployment.{args.target}.json").read_text())
 app_url = inventory["app_url"].rstrip("/")
+namespace = f'{config["catalog"]}.{config["schema"]}'
 client = WorkspaceClient(config=Config(profile=config["profile"], http_timeout_seconds=180, retry_timeout_seconds=10))
 out = ROOT / ".local/deploy" / args.target
 out.mkdir(parents=True, exist_ok=True)
@@ -75,9 +76,11 @@ try:
         health = request("/api/health")
         report["health"] = health
         check(health["database"] == "connected", "App-owned Lakebase schema is connected")
+        expected_cdc = "configured" if config.get("cdc_enabled", True) else "unavailable"
+        check(health.get("lakebase_cdc", "configured") == expected_cdc, "App reports the target's actual CDC capability")
         workspace = health["workspace"] if "://" in health["workspace"] else "https://" + health["workspace"]
-        check(urlsplit(workspace).hostname == urlsplit(config["host"]).hostname, "App uses the hackathon workspace")
-        check(health["vector_index"] == "openai.shopibricks.products_index", "App uses the openai product index")
+        check(urlsplit(workspace).hostname == urlsplit(config["host"]).hostname, "App uses the selected workspace")
+        check(health["vector_index"] == f"{namespace}.products_index", "App uses the target product index")
         check(health["genie_space_id"] == inventory["genie_space_id"], "App uses the target Genie space")
         check(str(health["experiment_id"]) == inventory["experiment_id"], "App uses the target MLflow experiment")
         html = request("/", raw=True).decode()
@@ -102,7 +105,7 @@ try:
         check(filtered["summary"]["queries"] == 12 and len(filtered["clusters"]) <= 4, "Persona, experience, and clustering controls work")
         lakehouse = request("/api/lakehouse?refresh=1")
         report["lakehouse"] = lakehouse
-        check(lakehouse["source"] == "openai.shopibricks.gold_commerce_daily" and len(lakehouse["demand"]) == 12, "App principal reads target gold metrics and demand")
+        check(lakehouse["source"] == f"{namespace}.gold_commerce_daily" and len(lakehouse["demand"]) == 12, "App principal reads target gold metrics and demand")
         check(sum(int(row["events"]) for row in lakehouse["daily"]) > 20000, "Gold analytics includes seeded history and live microbatches")
         tools = mcp("tools/list")
         check("semantic_search" in {tool["name"] for tool in tools["tools"]}, "Hosted MCP tool discovery works")

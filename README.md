@@ -2,7 +2,7 @@
 
 A multi-persona agentic commerce demo built with **React, D3, OpenAI and Databricks**. Explore shopper intent, curate products, inspect real agent handoffs, and complete a human-confirmed sandbox checkout.
 
-[Hackathon demo](https://shopibricks-paris-955682294748605.aws.databricksapps.com) · [FEVM demo](https://shopibricks-paris-7474645565734606.aws.databricksapps.com) · [Architecture](docs/ARCHITECTURE.md) · [Intent atlas](docs/INTENT_ATLAS.md) · [Presentation runbook](docs/RUNBOOK.md)
+[Personal demo](https://shopibricks-personal-7474650310803801.aws.databricksapps.com) · [Hackathon demo](https://shopibricks-paris-955682294748605.aws.databricksapps.com) · [FEVM demo](https://shopibricks-paris-7474645565734606.aws.databricksapps.com) · [Architecture](docs/ARCHITECTURE.md) · [Intent atlas](docs/INTENT_ATLAS.md) · [Presentation runbook](docs/RUNBOOK.md)
 
 The hosted demo requires access to its Databricks workspace. This public repository contains the source, synthetic catalog, configuration, documentation and reproducible tests. Local credentials, account-scoped traces and generated deployment reports are excluded.
 
@@ -64,9 +64,9 @@ npm run dev
 
 Open `http://localhost:8000`. Run `npm run seed` once against your dedicated demo database to load the fictional product catalog. See [app/README.md](app/README.md) for resource bindings and runtime details.
 
-The bundle has separate `fevm` and `emerging-hackathon` targets. The hackathon deployment uses **`openai.shopibricks`** and an isolated Lakebase project, product index, warehouse, pipeline, jobs, dashboard, Genie space and trace experiment. See the [hackathon deployment and verification runbook](docs/EMERGING_HACKATHON.md) for its resource links, repeatable deployment commands and rehearsal checks.
+The bundle has separate `fevm`, `emerging-hackathon` and `shopibricks-personal` targets. The hackathon deployment uses **`openai.shopibricks`** and an isolated Lakebase project, product index, warehouse, pipeline, jobs, dashboard, Genie space and trace experiment. See the [hackathon deployment and verification runbook](docs/EMERGING_HACKATHON.md) for its resource links, repeatable deployment commands and rehearsal checks. The [personal Free Edition runbook](docs/PERSONAL_FREE_EDITION.md) covers **`workspace.shopibricks`**, GPT-OSS-120B compatibility, unavailable Lakebase CDC, and the separate ChatGPT OAuth linking check.
 
-The original helpers and `app/app.yaml` remain FEVM-specific. The hackathon helper stages a separate manifest from [its explicit target configuration](deployments/emerging-hackathon.json). The example environment file contains nonsecret reference metadata; it does not grant access. Always pass the intended target and profile.
+The original helpers and `app/app.yaml` remain FEVM-specific. The workspace helper stages a separate manifest from each explicit configuration in `deployments/`. The example environment file contains nonsecret reference metadata; it does not grant access. Always pass the intended target and profile.
 
 ```sh
 databricks bundle validate --strict --target fevm --profile fevm
