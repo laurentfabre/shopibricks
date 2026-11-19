@@ -7,5 +7,77 @@
     "source": "https://openai.com/brand/",
     "download": "https://cdn.openai.com/brand/openai-logos.zip",
     "asset": "Official wordmark and Blossom SVGs, black and white"
+  },
+  "architecture_products": {
+    "retrieved_at": "2026-11-19",
+    "style_reference": "https://www.databricks.com/product/data-intelligence-platform",
+    "preservation": "Original SVG geometry and colors preserved. Embedded in downloaded SVGs. Product and concept icons retain their distinct labels.",
+    "assets": {
+      "products/lakebase.svg": {
+        "source": "https://www.databricks.com/sites/default/files/2026-01/icon-lakebase.svg",
+        "asset": "Databricks Lakebase product icon",
+        "sha256": "2312038a5c0f31b6cc2f1c91597ec5e9587cb0d00f84c9350d6275135c8dad3d"
+      },
+      "products/lakeflow.svg": {
+        "source": "https://www.databricks.com/sites/default/files/2026-01/icon-lakeflow.svg",
+        "asset": "Databricks Lakeflow product icon",
+        "sha256": "0da4ab13021c0e807d69d0cf0995aba96767af1409dfd2c34eb112306d3fdf92"
+      },
+      "products/unity-catalog.svg": {
+        "source": "https://www.databricks.com/sites/default/files/2026-01/icon-unity-catalog.svg",
+        "asset": "Unity Catalog product icon",
+        "sha256": "73ddeca1fe34a22aff33dad0fa3da8c35f17841715db4fe9e9f218e29fad7f0b"
+      },
+      "products/genie.svg": {
+        "source": "https://www.databricks.com/sites/default/files/2026-05/icon-genie.svg",
+        "asset": "Databricks Genie product icon",
+        "sha256": "907a2543cf2831421de1bfb19f4afb392d98527c90b9ee7b66d900b7c63db832"
+      },
+      "products/databricks-apps.svg": {
+        "source": "https://www.databricks.com/sites/default/files/2026-08/icon-databricks-apps.svg",
+        "asset": "Databricks Apps product icon",
+        "sha256": "d69c89c067d5a4e7c482cfc0ef75acd3f6ef788190b025434b44c87a442352a1"
+      },
+      "products/unity-gateway.svg": {
+        "source": "https://www.databricks.com/sites/default/files/2026-08/icon-unity-ai-gateway.svg",
+        "asset": "Unity AI Gateway product icon",
+        "sha256": "fdb2fc3b2fec3798d8542530b5b43e554d0e3e7eacbba4afbe0d682b5e6f27ad"
+      },
+      "products/vector-search.svg": {
+        "source": "https://www.databricks.com/sites/default/files/2024-11/SearchDataIcon.svg",
+        "asset": "Official search-data UI icon used on the Unity Catalog page",
+        "sha256": "b5cd901a4ae5684c655443fc660d7c37e4ed3bf741247685a38837f972751ace"
+      },
+      "products/sql-warehouse.svg": {
+        "source": "https://www.databricks.com/sites/default/files/2023-06/primary-icon-orange-data-warehouse.svg",
+        "asset": "Official data warehouse architecture icon",
+        "sha256": "cdefb743c80fb1b52c669739ca1449135f2be4cd93268762061e66e04e237c7c"
+      },
+      "products/custom-agents.svg": {
+        "source": "https://www.databricks.com/sites/default/files/2024-09/primary-icon-orange-ai.svg",
+        "asset": "Official AI concept icon; represents custom app agents, not Agent Bricks",
+        "sha256": "dc3b5d0f270beb67952cc55d3a127f5e7adf175dad1999e7bb7f9b8902c97957"
+      },
+      "products/authentication.svg": {
+        "source": "https://www.databricks.com/sites/default/files/2024-10/primary-icon-orange-authentication-service.svg",
+        "asset": "Official authentication architecture icon",
+        "sha256": "07b457e8f2ff4e2772f2860a551021e6579298e0f5a29359e7da10c1db30d913"
+      },
+      "products/mlflow.svg": {
+        "source": "https://mlflow.org/img/mlflow-black.svg",
+        "asset": "Official MLflow website wordmark, displayed on a dark backing",
+        "sha256": "2863c3c68fd5d30044aa6b30bb99c5b580439ad8e2ce3ea1cb7464e7e1ef1933"
+      },
+      "products/copilotkit.svg": {
+        "source": "https://www.copilotkit.ai/images/homepage-redesign/closing/copilotkit-mark.svg",
+        "asset": "Official CopilotKit website mark",
+        "sha256": "e66fe7011ba7368c725520472b27061065d679512e1bc669cdae7eea95f5be19"
+      },
+      "products/delta-table.svg": {
+        "source": "https://brandfolder.com/databricks",
+        "asset": "Official Primary Icon Delta Table, orange variant; Architecture Icons collection x44sjvk8rscxcx2gxktsxbtj",
+        "sha256": "3e9fa2ef4f91d08c5482d65ad92e2dadfbda3c8a1705e5744caefaae299960ee"
+      }
+    }
   }
 }

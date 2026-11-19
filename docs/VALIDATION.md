@@ -1,15 +1,16 @@
 # Validation
 
-## Architecture workspace — November 19, 2026
+## Architecture workspace and official artwork — November 19, 2026
 
-The Architecture tab adds two logical views: **App & Databricks** and **ChatGPT & Databricks**. Model labels and resource links derive from the current deployment. The ChatGPT view abstracts authentication transport and omits the proxy provider; backend connection behavior is unchanged.
+The Architecture tab provides two logical views: **App & Databricks** and **ChatGPT & Databricks**, now using Databricks reference styling and official product artwork. Model labels and resource links derive from the current deployment. The ChatGPT view abstracts authentication transport and omits the proxy provider; backend connection behavior is unchanged.
 
-- 26 architecture browser checks passed: workspace navigation, keyboard tabs/components, runtime model and Genie links, CDC disclosure, valid standalone SVG exports, direct presentation links, unavailable metadata, and 768/390/320px layouts. Inspection and export issued no POST requests.
-- The 61 atlas/persona checks and 23 presenter checks passed with the additional navigation tab.
-- Databricks Apps validation passed using `shopibricks-personal`, including the production build and all 47 application tests. The existing large-bundle warning remains.
-- Personal deployment `01f1e436a4721f46a678dc93804f96dc` succeeded. All 26 hosted checks passed, including byte-for-byte production asset hashes, both diagram/export features in the deployed bundle, and the direct ChatGPT diagram link serving that build.
+- 35 architecture browser checks passed: workspace navigation, keyboard tabs/components, runtime model and Genie links, CDC disclosure, valid standalone SVG exports, direct presentation links, unavailable metadata, and 768/390/320px layouts. The new checks cover embedded branding, card label bounds, offline logo decoding in both exports and bounded mobile images. Inspection and export issued no POST requests.
+- All 13 original product/concept asset SHA-256 hashes match the recorded provenance. SVGs parse successfully and contain no script or foreign-object elements.
+- Databricks Apps validation passed using `shopibricks-personal`, including lint, type checks, the production build and application tests. The existing large-bundle warning remains.
+- Personal deployment `01f1e43967d317bb8679dafb25ffd2ff` succeeded. All 26 hosted checks passed, including byte-for-byte production asset hashes, both diagram/export features in the deployed bundle, and the direct ChatGPT diagram link serving that build. FEVM and emerging-hackathon were not redeployed for this presentation update.
+- The initial addition of the Architecture tab had also passed the 61 atlas/persona checks and 23 presenter checks; those wider navigation suites were not repeated for this isolated styling update.
 
-Browser checks use explicit fixtures; screenshots were visually reviewed on desktop and mobile. See [architecture details and presentation links](ARCHITECTURE.md).
+Browser checks use explicit fixtures; desktop, mobile and offline-export screenshots were visually reviewed. See [architecture details, artwork provenance and presentation links](ARCHITECTURE.md).
 
 ## CopilotKit and MCP journeys — November 19, 2026
 

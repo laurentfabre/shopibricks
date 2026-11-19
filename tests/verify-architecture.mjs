@@ -26,9 +26,25 @@ await page.route('**/api/**',async route=>{
 });
 const nav=()=>page.getByRole('navigation',{name:'Main navigation'});
 const tabs=()=>page.getByRole('tablist',{name:'Architecture diagram'});
+async function verifyArtwork(label){
+ const artwork=await page.locator('.architecture-canvas>svg image').evaluateAll(images=>images.map(image=>({brand:image.dataset.brand,href:image.getAttribute('href')})));
+ check(artwork.length>8&&artwork.every(image=>image.brand&&image.href.startsWith('data:image/svg+xml'))&&artwork.some(image=>image.brand==='databricks')&&artwork.some(image=>image.brand==='unityCatalog'),`${label} embeds official product artwork and platform branding`);
+ const overflow=await page.locator('.architecture-node').evaluateAll(nodes=>nodes.flatMap(node=>{const card=node.querySelector('rect').getBBox();return [...node.querySelectorAll('text')].filter(text=>{const box=text.getBBox();return box.x<card.x||box.x+box.width>card.x+card.width-5;}).map(text=>text.textContent);}));
+ check(overflow.length===0,`${label} product labels fit their cards: ${overflow.join(', ')}`);
+}
+async function verifyOfflineExport(svg,label){
+ const offline=await browser.newContext({viewport:{width:1460,height:840},offline:true}),preview=await offline.newPage();
+ try{
+  await preview.setContent(`<style>body{margin:0}</style>${svg}`);
+  const decoded=await preview.locator('svg image').evaluateAll(async images=>Promise.all(images.map(async element=>{const image=new Image();image.src=element.getAttribute('href');try{await image.decode();return image.naturalWidth>0;}catch{return false;}})));
+  check(decoded.length>8&&decoded.every(Boolean),`${label} exported logos decode offline without external dependencies`);
+  await preview.screenshot({path:new URL(`${label}-export.png`,out).pathname});
+ }finally{await offline.close();}
+}
 try{
  await page.goto(base);await nav().getByRole('button',{name:'Architecture',exact:true}).click();
  await page.getByRole('heading',{name:'The app, its agents and the data platform'}).waitFor();
+ await verifyArtwork('App');
  check(await nav().getByRole('button',{name:'Architecture',exact:true}).getAttribute('aria-current')==='page','Architecture is a first-class workspace tab');
  check(await page.getByRole('button',{name:'Inspect Unity Gateway',exact:true}).isVisible(),'Application diagram includes Unity Gateway');
  await page.getByRole('button',{name:'Inspect OpenAI model',exact:true}).click();
@@ -43,8 +59,10 @@ try{
  check(appFile.suggestedFilename()==='shopibricks-architecture-app.svg','Application diagram exports as a standalone SVG');
  const svg=await readFile(await appFile.path(),'utf8');
  check(await page.evaluate(text=>!new DOMParser().parseFromString(text,'image/svg+xml').querySelector('parsererror'),svg),'Downloaded diagram is valid SVG XML');
+ await verifyOfflineExport(svg,'app');
  await tabs().getByRole('tab',{name:/App & Databricks/}).focus();await page.keyboard.press('ArrowRight');
  check(await tabs().getByRole('tab',{name:/ChatGPT & Databricks/}).getAttribute('aria-selected')==='true','Arrow-key tab navigation selects the ChatGPT diagram');
+ await verifyArtwork('ChatGPT');
  check((await page.locator('.architecture-page').innerText()).includes('authentication transport is abstracted'),'ChatGPT diagram identifies its logical connection abstraction');
  check(!(await page.locator('.architecture-page').innerText()).includes('Vercel'),'Presentation omits the proxy provider as requested');
  await page.getByRole('button',{name:'Inspect MCP activity',exact:true}).click();
@@ -53,10 +71,13 @@ try{
  check((await page.locator('.architecture-component-detail').innerText()).includes('explicit confirmation'),'Shopper handoff preserves the human checkout boundary');
  await page.screenshot({path:new URL('chatgpt-desktop.png',out).pathname,fullPage:true});
  const chatDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Download SVG'}).click();
- check((await chatDownload).suggestedFilename()==='shopibricks-architecture-chatgpt.svg','ChatGPT diagram exports independently');
+ const chatFile=await chatDownload;
+ check(chatFile.suggestedFilename()==='shopibricks-architecture-chatgpt.svg','ChatGPT diagram exports independently');
+ await verifyOfflineExport(await readFile(await chatFile.path(),'utf8'),'chatgpt');
  for(const width of [768,390,320]){
   await page.setViewportSize({width,height:1000});
   check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`Architecture fits ${width}px without page overflow`);
+  check(await page.locator('.architecture-product-logo').evaluateAll(images=>images.every(image=>{const box=image.getBoundingClientRect();return box.width<=76&&box.height<=40&&image.complete&&image.naturalWidth>0;})),`Product logos load and stay bounded at ${width}px`);
   if(width<700){check(await page.locator('.architecture-mobile-components button').first().evaluate(el=>el.getBoundingClientRect().height<180),`Mobile component cards remain compact at ${width}px`);await page.locator('.architecture-mobile-components').getByRole('button').filter({hasText:'Saved quote link'}).click();check((await page.locator('.architecture-component-detail').innerText()).includes('same account'),`Mobile component controls work at ${width}px`);}
   await page.screenshot({path:new URL(`chatgpt-${width}.png`,out).pathname,fullPage:true});
  }

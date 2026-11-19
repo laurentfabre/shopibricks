@@ -9,6 +9,14 @@ Open the personal demo directly:
 
 The code supports separate FEVM, emerging-hackathon and personal Free Edition deployments. Runtime configuration supplies the model, workspace and resource links. Products, profiles, campaign traffic and orders are synthetic. The new Architecture tab is deployed to the personal target.
 
+## Presentation design and official artwork
+
+The interactive diagrams use the Databricks reference architecture layout: a lava-red platform boundary, navy labels, oat service groups, rectangular product cards and a Unity Catalog governance foundation. Selecting a component highlights its connections and exposes its role, evidence and configured resource links.
+
+Official Databricks product artwork represents Apps, Lakebase, Lakeflow, Genie, Unity Catalog and Unity AI Gateway. Official architecture/concept icons represent SQL warehouses, Delta tables, search, authentication and custom app agents. The agents are not labeled Agent Bricks. Official OpenAI, MLflow and CopilotKit artwork completes the integration view. Original SVG geometry and colors are preserved; the MLflow wordmark has a dark backing for contrast.
+
+[Asset sources and SHA-256 hashes](../app/client/public/brand/SOURCES.json) record provenance. The original assets are imported as inline data URIs, so downloaded SVGs include every logo and render offline. Keyboard navigation, component controls on mobile, presenter talking points and execution links remain available.
+
 ## 1. App, Databricks and Unity Gateway to OpenAI
 
 ```mermaid
