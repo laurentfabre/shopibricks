@@ -94,6 +94,9 @@ try:
             if asset.endswith(".js"):
                 javascript += data
         check(all(label in javascript for label in [b"Start guided demo", b"Speaker notes", b"Download talking points"]), "Driver.js presenter guide and talking points are deployed")
+        check(all(label in javascript for label in [b"The app, its agents and the data platform", b"ChatGPT discovery, Databricks execution", b"Download SVG"]), "Both Architecture diagrams and SVG export are deployed")
+        architecture = request("/?view=architecture&diagram=chatgpt", raw=True).decode()
+        check(all(asset in architecture for asset in assets), "Architecture presentation link serves the verified production build")
         readiness = request("/api/catalog/readiness")
         check(readiness["total"] == readiness["ready"] == 12, "All 12 catalog products pass completeness checks")
         feed = request("/api/catalog/feed")

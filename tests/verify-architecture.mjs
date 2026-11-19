@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+import {chromium} from 'playwright';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {fixtureTransport} from './copilot-fixtures.mjs';
+const base=process.env.SHOPIBRICKS_TEST_URL||'http://localhost:8000';
+const out=new URL('./artifacts/architecture/',import.meta.url);await mkdir(out,{recursive:true});
+const products=JSON.parse(await readFile(new URL('../app/server-products.json',import.meta.url)));
+const atlas=JSON.parse(await readFile(new URL('./artifacts/atlas/fixture.json',import.meta.url)));
+const browser=await chromium.launch({channel:'chrome',headless:true});
+const page=await browser.newPage({viewport:{width:1440,height:1120},reducedMotion:'reduce'});
+const checks=[],errors=[],writes=[];let available=true;
+page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(15000);
+const check=(value,label)=>{assert.ok(value,label);checks.push(label);};
+await page.route('**/api/**',async route=>{
+ const path=new URL(route.request().url()).pathname;
+ if(route.request().method()==='POST')writes.push(path);
+ if(await fixtureTransport(route))return;
+ const json=data=>route.fulfill({json:data});
+ if(path==='/api/products')return json({products});
+ if(path==='/api/health')return available?json({database:'connected',model:'system.ai.gpt-oss-120b',workspace:'https://example.cloud.databricks.com',genie_space_id:'fixture-genie',experiment_id:'fixture-traces',pipeline_id:'fixture-pipeline',lakebase_cdc:'unavailable'}):route.fulfill({status:503,json:{error:{message:'Fixture: health unavailable'}}});
+ if(path==='/api/whoami')return json({label:'Browser fixture'});
+ if(path==='/api/intelligence')return json(atlas);
+ if(path==='/api/catalog/readiness')return json({items:[],ready:12,total:12,available:12});
+ if(path==='/api/operations')return json({metrics:{orders:0,revenue_cents:0},inventory:products,orders:[],events:[],source:'Browser fixture'});
+ return route.fulfill({status:500,json:{error:{message:`Unexpected fixture request ${path}`}}});
+});
+const nav=()=>page.getByRole('navigation',{name:'Main navigation'});
+const tabs=()=>page.getByRole('tablist',{name:'Architecture diagram'});
+try{
+ await page.goto(base);await nav().getByRole('button',{name:'Architecture',exact:true}).click();
+ await page.getByRole('heading',{name:'The app, its agents and the data platform'}).waitFor();
+ check(await nav().getByRole('button',{name:'Architecture',exact:true}).getAttribute('aria-current')==='page','Architecture is a first-class workspace tab');
+ check(await page.getByRole('button',{name:'Inspect Unity Gateway',exact:true}).isVisible(),'Application diagram includes Unity Gateway');
+ await page.getByRole('button',{name:'Inspect OpenAI model',exact:true}).click();
+ check((await page.locator('.architecture-component-detail').innerText()).includes('served on Databricks'),'Model details identify the personal deployment’s actual serving arrangement');
+ await page.getByRole('button',{name:'Inspect AI/BI Genie',exact:true}).focus();await page.keyboard.press('Enter');
+ check((await page.locator('.architecture-component-detail').innerText()).includes('app service principal'),'Keyboard selection exposes the real Genie execution identity');
+ check(await page.getByRole('link',{name:'Open in Databricks'}).getAttribute('href')==='https://example.cloud.databricks.com/genie/rooms/fixture-genie','Genie resource link derives from runtime configuration');
+ await page.getByRole('button',{name:'Inspect Delta tables',exact:true}).click();
+ check((await page.locator('.architecture-component-detail').innerText()).includes('CDC is unavailable'),'Deployment-specific CDC limitation remains accurate');
+ await page.screenshot({path:new URL('app-desktop.png',out).pathname,fullPage:true});
+ const appDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Download SVG'}).click();const appFile=await appDownload;
+ check(appFile.suggestedFilename()==='shopibricks-architecture-app.svg','Application diagram exports as a standalone SVG');
+ const svg=await readFile(await appFile.path(),'utf8');
+ check(await page.evaluate(text=>!new DOMParser().parseFromString(text,'image/svg+xml').querySelector('parsererror'),svg),'Downloaded diagram is valid SVG XML');
+ await tabs().getByRole('tab',{name:/App & Databricks/}).focus();await page.keyboard.press('ArrowRight');
+ check(await tabs().getByRole('tab',{name:/ChatGPT & Databricks/}).getAttribute('aria-selected')==='true','Arrow-key tab navigation selects the ChatGPT diagram');
+ check((await page.locator('.architecture-page').innerText()).includes('authentication transport is abstracted'),'ChatGPT diagram identifies its logical connection abstraction');
+ check(!(await page.locator('.architecture-page').innerText()).includes('Vercel'),'Presentation omits the proxy provider as requested');
+ await page.getByRole('button',{name:'Inspect MCP activity',exact:true}).click();
+ check((await page.locator('.architecture-component-detail').innerText()).includes('application telemetry'),'MCP activity is accurately distinguished from unsolicited ChatGPT messages');
+ await page.getByRole('button',{name:'Inspect Sandbox checkout',exact:true}).click();
+ check((await page.locator('.architecture-component-detail').innerText()).includes('explicit confirmation'),'Shopper handoff preserves the human checkout boundary');
+ await page.screenshot({path:new URL('chatgpt-desktop.png',out).pathname,fullPage:true});
+ const chatDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Download SVG'}).click();
+ check((await chatDownload).suggestedFilename()==='shopibricks-architecture-chatgpt.svg','ChatGPT diagram exports independently');
+ for(const width of [768,390,320]){
+  await page.setViewportSize({width,height:1000});
+  check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`Architecture fits ${width}px without page overflow`);
+  if(width<700){check(await page.locator('.architecture-mobile-components button').first().evaluate(el=>el.getBoundingClientRect().height<180),`Mobile component cards remain compact at ${width}px`);await page.locator('.architecture-mobile-components').getByRole('button').filter({hasText:'Saved quote link'}).click();check((await page.locator('.architecture-component-detail').innerText()).includes('same account'),`Mobile component controls work at ${width}px`);}
+  await page.screenshot({path:new URL(`chatgpt-${width}.png`,out).pathname,fullPage:true});
+ }
+ await page.setViewportSize({width:1440,height:1120});await page.getByRole('button',{name:'Inspect execution',exact:true}).click();
+ check(await nav().getByRole('button',{name:'Developer studio',exact:true}).getAttribute('aria-current')==='page','Evidence action opens Developer studio');
+ await page.goto(`${base}/?view=architecture&diagram=chatgpt`);await page.getByRole('heading',{name:'ChatGPT discovery, Databricks execution'}).waitFor();
+ check(await tabs().getByRole('tab',{name:/ChatGPT & Databricks/}).getAttribute('aria-selected')==='true','Direct presentation link opens the requested diagram');
+ available=false;await page.goto(`${base}/?view=architecture`);await page.getByRole('button',{name:'Inspect OpenAI model',exact:true}).click();
+ check((await page.locator('.architecture-component-detail').innerText()).includes('configuration is currently unavailable'),'Architecture remains usable when runtime metadata is unavailable');
+ check(writes.length===0,'Exploring and exporting architecture makes no POST requests');
+ check(errors.length===0,`No browser runtime errors: ${errors.join('; ')}`);
+ await writeFile(new URL('results.json',out),JSON.stringify({passed:true,checks},null,2));console.log(JSON.stringify({passed:true,checks:checks.length}));
+}catch(error){await page.screenshot({path:new URL('failure.png',out).pathname,fullPage:true});await writeFile(new URL('results.json',out),JSON.stringify({passed:false,checks,errors,error:String(error)},null,2));throw error;}finally{await browser.close();}

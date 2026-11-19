@@ -21,6 +21,7 @@ SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:funnel
 SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:tour
 SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:presenter
 SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:journeys
+SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:architecture
 ```
 
 `verify`, `verify:atlas` and `verify:personas` run the current workspace suite with explicit API fixtures. They check clusters, query inspection and handoff, catalog/brand/channel views, data-source labeling, error recovery, downloads, profile/thread/cart isolation, and 1440/1024/768/390/320px layouts. They make no real model calls or database writes.
@@ -32,6 +33,8 @@ SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:journeys
 `verify:presenter` checks the 14-stop presenter agenda, individual spotlights, expanded speaker notes on desktop and 320px mobile, talking-point copy/download, atlas loading/error/empty fallbacks, cancellation, view/focus restoration, and prompt preparation. It asserts that rehearsal makes no POST requests and preserves the shopper's bag and draft.
 
 `verify:journeys` checks correlated MCP activity, merchant shared-state navigation, CopilotKit inventory and saved-quote renderers, persona/thread separation, responsive layouts, changed prices, unavailable stock and quote expiry. Its API and model streams are fixtures.
+
+`verify:architecture` checks the workspace entry, keyboard-operated diagram tabs and components, runtime-derived model/resource details, standalone SVG downloads, direct links, mobile layouts, and unavailable metadata. It asserts that exploring the diagrams makes no POST requests.
 
 Artifacts go into ignored `tests/artifacts/` subdirectories. Tests use isolated headless Chrome; they do not attach to a presenter's browser or reuse its cookies.
 

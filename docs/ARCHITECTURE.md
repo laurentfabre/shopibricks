@@ -1,58 +1,83 @@
 # ShopiBricks architecture
 
-All resources are in FEVM serverless stable, using explicit CLI profile `fevm`. Product, customer, traffic and payment data are synthetic.
+The app’s **Architecture** workspace tab contains two interactive presentation diagrams with component details, talking points, configured Databricks resource links and standalone SVG downloads. Both are logical architecture views. The ChatGPT view abstracts authentication transport and omits the proxy provider from the presentation.
+
+Open the personal demo directly:
+
+- [App & Databricks](https://shopibricks-personal-7474650310803801.aws.databricksapps.com/?view=architecture)
+- [ChatGPT & Databricks](https://shopibricks-personal-7474650310803801.aws.databricksapps.com/?view=architecture&diagram=chatgpt)
+
+The code supports separate FEVM, emerging-hackathon and personal Free Edition deployments. Runtime configuration supplies the model, workspace and resource links. Products, profiles, campaign traffic and orders are synthetic. The new Architecture tab is deployed to the personal target.
+
+## 1. App, Databricks and Unity Gateway to OpenAI
 
 ```mermaid
 flowchart LR
-  shopper[Shopper / presenter] --> app[Databricks App\nReact + Express]
-  app <-->|AG-UI over SSE| agents[Concierge + specialists]
-  agents <-->|OpenAI Responses| gateway[Unity AI Gateway\nsystem.ai.gpt-6-luna]
-  agents <-->|MCP SDK| mcp[Commerce MCP tools\nresources + prompts]
-  mcp --> lakebase[(Lakebase Autoscaling\nproducts / checkout / orders)]
-  app -->|ACP sandbox REST| lakebase
-  lakebase -->|native CDC| history[(Unity Catalog\nchange history + current_orders)]
-  job[Bounded serverless emitter] -->|JSON microbatches| volume[UC Volume]
-  volume --> autoloader[Auto Loader / Lakeflow]
-  autoloader --> bronze[Bronze]
-  bronze --> silver[Silver expectations / dedup]
-  bronze --> quarantine[Quarantine]
-  silver --> gold[Gold demand + daily commerce]
-  gold --> metrics[UC metric view]
-  metrics --> genie[Genie]
-  gold --> dashboard[AI/BI dashboard]
-  mcp --> gold
-  agents --> genie
-  catalog[(UC product catalog)] --> vector[Hybrid Vector Search]
-  mcp --> vector
-  gateway -. SDK autolog / native ingestion .-> traces[MLflow traces in Unity Catalog]
-  agents -->|correlated events| lakebase
-  chatgpt[ChatGPT connection deferred] -. future authenticated MCP .-> mcp
+  UI[ShopiBricks React UI\nShopper / Merchant / Developer] <-->|AG-UI + shared state| CK[CopilotKit runtime]
+  CK <--> A[Concierge + four specialist agents]
+  A <-->|Responses API| UG[Unity Gateway]
+  UG <--> MODEL[Configured OpenAI model endpoint]
+  A <-->|In-process MCP SDK| MCP[Commerce tools]
+  MCP <--> LB[(Lakebase\nCatalog / stock / quotes / checkout / events)]
+  MCP <-->|Hybrid retrieval| VS[Vector Search]
+  A -->|Merchant question| G[AI/BI Genie]
+  G <-->|Generated SQL + results| SQL[SQL warehouse]
+  SQL --> DELTA[(Unity Catalog Delta tables)]
+  LF[Bounded synthetic stream + Lakeflow] --> DELTA
+  DELTA -->|Descriptive product catalog| VS
+  UG -. SDK autolog .-> TRACE[MLflow traces\nUnity Catalog destination]
+  UI -->|Human-reviewed sandbox checkout| LB
 ```
+
+The personal deployment uses **OpenAI GPT-OSS-120B served on Databricks**, through the configured gateway route. It does not make a direct model request to `api.openai.com`. Other deployments use their configured OpenAI endpoint; the diagram reads the actual model name from `/api/health`.
+
+CopilotKit runs inside ShopiBricks. Its owner-scoped runtime wraps the existing agents and streams AG-UI text, tool results, validated product cards and display-only navigation. It requires no CopilotKit cloud account. Conversation history is persisted in Lakebase and isolated by authenticated account, persona, profile, channel and voice.
+
+The concierge delegates to Catalog, Inventory, Checkout and Merchant analyst. Catalog cards require an authoritative inventory check and server-enforced selection budget. Generated content selects known React components; it is not arbitrary executable UI.
+
+Explicitly asking **“Use Genie”** routes the merchant analyst to the configured Genie space. The backend returns generated SQL, executed query results and statement IDs. Genie executes under the app service principal. Direct merchant metric queries and MCP activity summaries are separate tools and are not labeled Genie execution.
+
+**Presenter line:** “CopilotKit connects the experience to our agents. Unity Gateway provides governed OpenAI model access. The tools ground each answer in Databricks data, and Genie turns merchant questions into inspectable SQL.”
+
+## 2. ChatGPT connected to Databricks
+
+```mermaid
+flowchart LR
+  C[ChatGPT shopper conversation] <-->|Authenticated MCP · logical connection| M[ShopiBricks commerce tools\nDatabricks App]
+  CONSENT[Account consent / OAuth] -. approved tool access .-> M
+  M <--> L[(Lakebase\nCatalog / inventory / temporary quotes)]
+  M <--> R[Vector Search / governed SQL]
+  M --> E[(Correlated MCP activity\nLakebase protocol events)]
+  E -->|Application SSE| MERCHANT[Merchant Live journeys]
+  E -->|Captured search arguments| ATLAS[Intent atlas]
+  L --> Q[Authenticated saved quote link]
+  Q -. continuation URL .-> C
+  Q --> REVIEW[ShopiBricks price / stock review]
+  REVIEW --> HUMAN[Human-confirmed sandbox checkout]
+```
+
+ChatGPT selects tools; Databricks executes commerce logic. The five exposed tools are `search_products`, `get_inventory`, `semantic_search`, `get_merchant_metrics` and `quote_cart`. Four are read-only; `quote_cart` saves a temporary selection and returns a continuation URL. `ask_genie` is an internal merchant-agent tool, not part of the external ChatGPT allowlist.
+
+The logical connection shown here does not claim direct native ChatGPT-to-Databricks OAuth registration. Implementation and connection setup remain documented in [the connection runbook](VERCEL_BRIDGE.md).
+
+MCP events are application telemetry around executed calls: source, correlated call ID, start/outcome, duration, bounded product IDs and saved quote references. They do not contain the full ChatGPT conversation. A separate owner-scoped SSE feed updates the merchant browser. Search arguments feed the intent atlas with explicit external-source labels and no invented shopper profile.
+
+A quote lasts 30 minutes and belongs to the authenticated account. Opening its link rechecks current prices and inventory but creates no checkout. Choosing to continue creates an incomplete draft. Order completion stays behind explicit human confirmation in ShopiBricks. There are no real payments, shipments or native ChatGPT checkout claims.
+
+**Presenter line:** “The conversation starts in ChatGPT. Databricks executes the commerce tools and records the evidence. The merchant sees real discovery signals, while the shopper can carry a saved selection into an explicitly reviewed checkout.”
 
 ## Operational and analytical truth
 
-The application reads current price and stock from Lakebase. Checkout uses transactions, row locks, authoritative recomputation, and request-bound idempotency. The UI requires an explicit confirmation before creating a sandbox order. Rehearsals decrement actual demo stock but never call a payment service.
+Lakebase provides current price and stock. Checkout uses transactions, row locks, authoritative recomputation and request-bound idempotency. Confirming a sandbox order changes actual demo inventory.
 
-Native Lakebase CDC writes `lb_*_history` tables into `serverless_stable_vwywqi_catalog.shopibricks_laurent`. `current_orders` selects the latest event for each order, excluding preimages and deletes. CDC is asynchronous; the same sandbox order ID has been observed in both stores.
+The campaign stream is independent: a bounded serverless job emits synthetic microbatches into a Unity Catalog volume, then Lakeflow produces bronze, silver and gold datasets. Gold metrics refresh after pipeline completion. Synthetic traffic revenue and stockout exposure are not actual sandbox sales or confirmed lost revenue. Descriptive catalog/vector data never substitutes for live inventory checks.
 
-The separate synthetic campaign stream writes 240-event microbatches about every 15 seconds, bounded by a requested duration. A serverless job triggers incremental Lakeflow updates while emitting and waits for its final flush. Gold data refreshes at pipeline completion, not on each UI frame. No perpetual schedule is enabled.
-
-The presenter stockout button explicitly changes Lakebase stock. It is separate from the synthetic campaign generator. The analytical product catalog and vector index contain descriptive catalog information; live availability must always be checked against Lakebase.
-
-## Agent and protocol boundaries
-
-The concierge delegates to Catalog, Inventory, Checkout and Merchant analyst specialists. Each uses the same governed OpenAI model with different tool sets. Catalog and inventory access go through the official MCP SDK. The browser receives AG-UI run, text, tool and structured-card events. Generated content selects validated React components; it is not arbitrary executable UI.
-
-Product-card prices and totals are computed from authoritative catalog records. Explicit EUR budgets carry forward through the conversation; an over-budget shortlist is rejected before a UI event is emitted, allowing the specialist to retry. Comparison cards show alternatives only when requested and do not imply a combined purchase total.
-
-The MCP server also exposes Streamable HTTP at `/mcp`, typed read-only tools, a commerce policy resource and a Paris-weekend prompt. Internal agent tools use an in-process MCP transport. Protocol Studio labels this distinction.
-
-The ACP merchant sandbox exposes five canonical `/checkout_sessions` REST operations. This is separate from MCP and from merchant activation inside ChatGPT. Production signatures, payment processing, order webhooks and OpenAI merchant onboarding are not activated. Personal ChatGPT Pro connection is deferred by the presenter.
+Native Lakebase CDC is available in the configured FEVM/hackathon deployments but **unavailable on the personal Free Edition target**. The diagrams therefore do not imply operational order replication into Delta. Consult the target runbooks for the specific bindings and supported paths.
 
 ## Identity and observability
 
-The hosted Databricks App authenticates presenters at the platform boundary. It uses its attached service principal for shared demo data, the SQL warehouse, model access, Genie, MLflow and jobs. The principal has schema usage, table DML and sequence access to the seven dedicated Lakebase tables; Laurent retains ownership. Runtime startup reuses the provisioned schema. It does not claim per-user delegated database execution. Native SDKs manage OAuth; source code contains no API keys.
+The hosted app authenticates users at the platform boundary and uses its attached service principal for shared demo data, model access, SQL, Genie, MLflow and jobs. Application-level ownership scopes conversations, quotes, orders and protocol events. This is not per-user delegated database execution. Native SDKs handle authentication; credentials stay out of source control.
 
-Checkout ownership and conversation history are scoped to the authenticated application caller. Correlated run, tool and checkout events persist in Lakebase; token deltas are coalesced before persistence. MLflow OpenAI autolog records model calls separately in the dedicated Unity Catalog `agent_traces` tables, using experiment `588811517474050`. A stored hosted model span has been read back with its actual inputs and outputs; its response ID matches the app's event trail. The worker selects an already-provisioned trace binding and does not create trace tables. Per-call diagnostics emit IDs without querying the SQL warehouse. A protocol event alone does not prove a downstream webhook was delivered.
+Lakebase retains correlated application events. MLflow OpenAI autolog separately records model inputs, outputs and tool calls in the configured experiment and Unity Catalog trace destination. Developer studio exposes event payloads and links to the configured Genie, MLflow, pipeline and job resources. A protocol event alone does not establish external delivery or a sale.
 
-The deployment inventory is in `docs/deployment.json` (local; use [deployment.example.json](deployment.example.json) as a template), measured checks in [VALIDATION.md](VALIDATION.md), and the presentation script in [RUNBOOK.md](RUNBOOK.md).
+See [CopilotKit journeys](COPILOT_JOURNEYS.md), [personal deployment](PERSONAL_FREE_EDITION.md), [hackathon deployment](EMERGING_HACKATHON.md) and [validation](VALIDATION.md) for implementation, target limitations and dated verification.

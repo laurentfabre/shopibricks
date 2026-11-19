@@ -16,6 +16,7 @@ The hosted demo requires access to its Databricks workspace. This public reposit
 - **Developer:** inspect AG-UI events, MCP tools, agent handoffs, gateway status and ACP-shaped sandbox checkout.
 - **ChatGPT bridge:** a Vercel OAuth/MCP endpoint connects to the personal demo with owner consent, four read-only tools and temporary saved quotes. The live ChatGPT connection and product retrieval were confirmed on 19 November 2026. See the [connection steps, verification and demo talking points](docs/VERCEL_BRIDGE.md).
 - **Connected journeys:** CopilotKit shared state and tool cards, a live merchant MCP activity feed, ChatGPT search signals in the atlas, and an authenticated quote handoff. See [the five-minute demo and implementation](docs/COPILOT_JOURNEYS.md).
+- **Architecture:** two interactive diagrams explain the app → Unity Gateway → OpenAI path and ChatGPT → Databricks commerce. Select components for evidence and presenter notes, open configured Databricks resources, or download either diagram as SVG.
 - **Operations:** live inventory and sandbox orders, plus clearly labeled synthetic streaming analytics.
 
 The copilot is toggleable, the workspace adapts to mobile, and Driver.js tours connect the shopper, merchant and developer journeys.
@@ -90,6 +91,7 @@ SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:funnel
 SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:tour
 SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:presenter
 SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:journeys
+SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:architecture
 ```
 
 Browser tests use isolated Chrome with explicit API fixtures. Run the application tests first to generate the atlas fixture. Real integration checks are separate and require the configured workspace.

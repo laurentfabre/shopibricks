@@ -12,7 +12,8 @@
     "verify:atlas": "node verify-atlas.mjs",
     "verify:legacy": "node verify-browser.mjs",
     "verify:presenter": "node verify-presenter.mjs",
-    "verify:journeys": "node verify-journeys.mjs"
+    "verify:journeys": "node verify-journeys.mjs",
+    "verify:architecture": "node verify-architecture.mjs"
   },
   "devDependencies": {
     "playwright": "1.65.0-alpha-2026-11-02"

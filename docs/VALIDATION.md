@@ -1,5 +1,16 @@
 # Validation
 
+## Architecture workspace — November 19, 2026
+
+The Architecture tab adds two logical views: **App & Databricks** and **ChatGPT & Databricks**. Model labels and resource links derive from the current deployment. The ChatGPT view abstracts authentication transport and omits the proxy provider; backend connection behavior is unchanged.
+
+- 26 architecture browser checks passed: workspace navigation, keyboard tabs/components, runtime model and Genie links, CDC disclosure, valid standalone SVG exports, direct presentation links, unavailable metadata, and 768/390/320px layouts. Inspection and export issued no POST requests.
+- The 61 atlas/persona checks and 23 presenter checks passed with the additional navigation tab.
+- Databricks Apps validation passed using `shopibricks-personal`, including the production build and all 47 application tests. The existing large-bundle warning remains.
+- Personal deployment `01f1e436a4721f46a678dc93804f96dc` succeeded. All 26 hosted checks passed, including byte-for-byte production asset hashes, both diagram/export features in the deployed bundle, and the direct ChatGPT diagram link serving that build.
+
+Browser checks use explicit fixtures; screenshots were visually reviewed on desktop and mobile. See [architecture details and presentation links](ARCHITECTURE.md).
+
 ## CopilotKit and MCP journeys — November 19, 2026
 
 Verified on the **personal Free Edition** deployment, using the explicitly selected `shopibricks-personal` profile. Deployment `01f1e42d9c0b1a0997d85b3f6d06ff2c` started successfully. FEVM and emerging-hackathon were not redeployed for this update.
