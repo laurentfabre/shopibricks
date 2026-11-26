@@ -1,0 +1,12 @@
+# Copy to resources/free-edition.local.yml, which is ignored by Git.
+# Match these fields to deployments/shopibricks-personal.local.json.
+targets:
+  shopibricks-personal:
+    workspace:
+      host: https://YOUR-WORKSPACE.cloud.databricks.com
+      profile: shopibricks-personal
+      root_path: /Workspace/Users/you@example.com/.bundle/shopibricks-paris/shopibricks-personal
+    variables:
+      catalog: workspace
+      schema: shopibricks
+      warehouse_id: YOUR_WAREHOUSE_ID

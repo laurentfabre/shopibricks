@@ -31,6 +31,9 @@ tests/test-results/
 **/.browser-profile/
 **/.databricks/
 **/.data/
+**/.vercel/
+/deployments/*.local.json
+/resources/*.local.yml
 /docs/*.json
 !/docs/deployment.example.json
 /docs/*.png

@@ -1,7 +1,7 @@
-"""Provision the personal Vercel bridge. Native Databricks OAuth; no bearer-token extraction.
+"""Provision the Free Edition Vercel bridge using native Databricks OAuth.
 
-Vercel MCP is preferred. This fallback uses VERCEL_TOKEN only from the file explicitly
-authorized by the user. Secret values stay in memory and are never printed or saved.
+Uses VERCEL_TOKEN only from the explicitly selected local environment file.
+Secret values stay in memory and are never printed or saved locally.
 """
 import argparse
 import json
@@ -11,9 +11,6 @@ from urllib.parse import urlencode
 import requests
 
 ROOT = Path(__file__).resolve().parents[1]
-TEAM = "team_855m3YQ51TyMm7TEIwoSSVNZ"
-PROJECT = "shopibricks-mcp-personal"
-PROFILE = "shopibricks-personal"
 INVENTORY = ROOT / "docs/deployment.shopibricks-personal.json"
 
 
@@ -25,11 +22,20 @@ class BridgeDeployment:
             raise ValueError("VERCEL_TOKEN is missing from the authorized file")
         self.session = requests.Session()
         self.session.headers["Authorization"] = "Bearer " + token
+        config_path = ROOT / "deployments/shopibricks-personal.local.json"
+        if not config_path.exists():
+            config_path = ROOT / "deployments/shopibricks-personal.json"
+        self.config = json.loads(config_path.read_text())
+        self.team = self.config["vercel_team_id"]
+        self.project_name = self.config["vercel_project"]
+        self.profile = self.config["profile"]
         self.inventory = json.loads(INVENTORY.read_text())
+        if self.inventory["host"] != self.config["host"] or self.inventory["app_name"] != self.config["app_name"]:
+            raise ValueError("The local inventory does not match the selected Free Edition deployment")
 
     def api(self, method, path, payload=None, allow_missing=False):
         separator = "&" if "?" in path else "?"
-        response = self.session.request(method, "https://api.vercel.com" + path + separator + urlencode({"teamId": TEAM}), json=payload, timeout=60)
+        response = self.session.request(method, "https://api.vercel.com" + path + separator + urlencode({"teamId": self.team}), json=payload, timeout=60)
         if response.status_code == 404 and allow_missing:
             return None
         if not response.ok:
@@ -37,7 +43,7 @@ class BridgeDeployment:
         return response.json() if response.content else {}
 
     def cli(self, *args):
-        result = subprocess.run(["databricks", *args, "--profile", PROFILE, "-o", "json"], capture_output=True, text=True, timeout=60)
+        result = subprocess.run(["databricks", *args, "--profile", self.profile, "-o", "json"], capture_output=True, text=True, timeout=60)
         if result.returncode:
             raise RuntimeError(f"Databricks {' '.join(args[:2])} failed (exit {result.returncode})")
         return json.loads(result.stdout) if result.stdout.strip() else {}
@@ -50,18 +56,18 @@ class BridgeDeployment:
 
     def audit(self):
         teams = self.api("GET", "/v2/teams")
-        team = next(t for t in teams["teams"] if t["id"] == TEAM)
+        team = next(t for t in teams["teams"] if t["id"] == self.team)
         identity = self.cli("current-user", "me")
-        if identity["userName"] != "laurent.fabre@gmail.com":
+        if identity["userName"] != self.config["expected_user"]:
             raise ValueError("Unexpected personal workspace identity")
-        project = self.api("GET", f"/v9/projects/{PROJECT}", allow_missing=True)
+        project = self.api("GET", f"/v9/projects/{self.project_name}", allow_missing=True)
         print(json.dumps({"team": team["slug"], "workspace_identity": identity["userName"], "existing_project": project["id"] if project else None}))
 
     def project(self):
-        project = self.api("GET", f"/v9/projects/{PROJECT}", allow_missing=True)
+        project = self.api("GET", f"/v9/projects/{self.project_name}", allow_missing=True)
         if project is None:
-            project = self.api("POST", "/v11/projects", {"name": PROJECT, "framework": None, "publicSource": False, "ssoProtection": None})
-        self.inventory.update(bridge_project_id=project["id"], bridge_team_id=TEAM, bridge_url=f"https://{PROJECT}.vercel.app")
+            project = self.api("POST", "/v11/projects", {"name": self.project_name, "framework": None, "publicSource": False, "ssoProtection": None})
+        self.inventory.update(bridge_project_id=project["id"], bridge_team_id=self.team, bridge_url=f"https://{self.project_name}.vercel.app")
         self.save()
         print(json.dumps({"project_id": project["id"], "bridge_url": self.inventory["bridge_url"]}))
 
@@ -104,7 +110,7 @@ class BridgeDeployment:
             if not path.is_file() or any(p in {"tests", "__pycache__", ".venv", ".vercel"} for p in relative.parts) or path.name.startswith(".env"):
                 continue
             files.append({"file": str(relative), "data": path.read_text(), "encoding": "utf-8"})
-        result = self.api("POST", "/v13/deployments", {"name": PROJECT, "project": self.inventory["bridge_project_id"], "target": "production", "files": files, "projectSettings": {"framework": None}})
+        result = self.api("POST", "/v13/deployments", {"name": self.project_name, "project": self.inventory["bridge_project_id"], "target": "production", "files": files, "projectSettings": {"framework": None}})
         self.inventory["bridge_deployment_id"] = result["id"]
         self.save()
         print(json.dumps({"deployment_id": result["id"], "state": result.get("readyState"), "url": result.get("url")}))

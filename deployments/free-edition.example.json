@@ -1,0 +1,21 @@
+{
+  "profile": "shopibricks-personal",
+  "host": "https://YOUR-WORKSPACE.cloud.databricks.com",
+  "expected_user": "you@example.com",
+  "catalog": "workspace",
+  "schema": "shopibricks",
+  "warehouse_id": "YOUR_WAREHOUSE_ID",
+  "app_name": "shopibricks-personal",
+  "lakebase_project": "shopibricks-personal",
+  "vector_endpoint": "shopibricks-personal",
+  "embedding_endpoint": "databricks-gte-large-en",
+  "model_endpoint": "databricks-gpt-oss-120b",
+  "model": "system.ai.gpt-oss-120b",
+  "gateway_api": "mlflow",
+  "cdc_enabled": false,
+  "genie_parent_path": "/Workspace/Users/you@example.com",
+  "source_code_path": "/Workspace/Users/you@example.com/shopibricks-personal-app",
+  "experiment_name": "/Shared/ShopiBricks-Personal-Traces",
+  "vercel_team_id": "YOUR_VERCEL_TEAM_ID",
+  "vercel_project": "YOUR-UNIQUE-BRIDGE-PROJECT"
+}

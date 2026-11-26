@@ -35,6 +35,9 @@ class ConsentForm(HTMLParser):
 def verify(profile, browser=False):
     root = Path(__file__).resolve().parents[1]
     inventory = json.loads((root / "docs/deployment.shopibricks-personal.json").read_text())
+    if profile != inventory["profile"]:
+        raise ValueError("The explicitly selected profile must match the deployment inventory")
+    expected_user = inventory["expected_user"]
     app_url, bridge = inventory["app_url"].rstrip("/"), inventory["bridge_url"]
     resource = bridge + "/mcp"
     client = WorkspaceClient(config=Config(profile=profile, http_timeout_seconds=100, retry_timeout_seconds=1))
@@ -94,7 +97,7 @@ def verify(profile, browser=False):
         return json.loads(next(item["text"] for item in result["content"] if item["type"] == "text"))
 
     try:
-        check(client.current_user.me().user_name == "laurent.fabre@gmail.com", "Native SDK uses the selected personal identity")
+        check(client.current_user.me().user_name == expected_user, "Native SDK uses the selected personal identity")
         metadata = external("/.well-known/oauth-authorization-server").json()
         check(metadata["issuer"] == bridge and metadata["registration_endpoint"] == bridge + "/register" and metadata["code_challenge_methods_supported"] == ["S256"], "OAuth discovery uses the Vercel issuer, dynamic registration and PKCE")
         check(external("/.well-known/oauth-protected-resource/mcp").json()["resource"] == resource, "Protected-resource discovery matches the MCP endpoint")
@@ -112,7 +115,7 @@ def verify(profile, browser=False):
         consent = native("/bridge/authorize", query=query, raw=True, response_headers=["set-cookie", "content-security-policy", "referrer-policy"])
         form = ConsentForm()
         form.feed(consent["text"])
-        check(set(form.fields) == {"request", "csrf"} and "laurent.fabre@gmail.com" in consent["text"], "Authenticated owner receives consent with a browser-bound CSRF challenge")
+        check(set(form.fields) == {"request", "csrf"} and expected_user in consent["text"], "Authenticated owner receives consent with a browser-bound CSRF challenge")
         check("form-action 'self' https://chatgpt.com;" in consent.get("content-security-policy", ""), "Consent policy permits the approved browser callback to ChatGPT")
         cookie = "__Secure-shopibricks_bridge=" + form.fields["csrf"]
         check(cookie in consent.get("set-cookie", ""), "Approval cookie matches the consent session")
@@ -194,7 +197,7 @@ def verify(profile, browser=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--profile", required=True, choices=["shopibricks-personal"])
+    parser.add_argument("--profile", required=True)
     parser.add_argument("--browser", action="store_true", help="Submit the hosted consent document using real isolated Chrome headers and cookie behavior")
     args = parser.parse_args()
     raise SystemExit(0 if verify(args.profile, browser=args.browser) else 1)

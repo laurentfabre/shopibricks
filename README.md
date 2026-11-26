@@ -1,110 +1,226 @@
+<div align="center">
+
 # ShopiBricks
 
-A multi-persona agentic commerce demo built with **React, D3, CopilotKit, OpenAI and Databricks**. Explore shopper intent, curate products, inspect real agent handoffs, and complete a human-confirmed sandbox checkout.
+### From a shopping conversation to governed commerce.
 
-[Personal demo](https://shopibricks-personal-7474650310803801.aws.databricksapps.com) · [Hackathon demo](https://shopibricks-paris-955682294748605.aws.databricksapps.com) · [FEVM demo](https://shopibricks-paris-7474645565734606.aws.databricksapps.com) · [Architecture](docs/ARCHITECTURE.md) · [Intent atlas](docs/INTENT_ATLAS.md) · [Presentation runbook](docs/RUNBOOK.md)
+A working demo of ChatGPT-connected shopping, merchant intelligence and human-confirmed checkout, built on Databricks.
 
-The hosted demo requires access to its Databricks workspace. This public repository contains the source, synthetic catalog, configuration, documentation and reproducible tests. Local credentials, account-scoped traces and generated deployment reports are excluded.
+![Databricks Apps](https://img.shields.io/badge/Databricks-Apps-FF3621?style=flat-square) ![OpenAI Responses](https://img.shields.io/badge/OpenAI-Responses-1B3139?style=flat-square) ![MCP](https://img.shields.io/badge/MCP-OAuth%20%2B%20tools-1B3139?style=flat-square) ![CopilotKit](https://img.shields.io/badge/CopilotKit-AG--UI-635BFF?style=flat-square) ![Sandbox](https://img.shields.io/badge/Commerce-sandbox-00856A?style=flat-square)
 
-![ShopiBricks interactive intent atlas, with explicitly fictional example queries](docs/images/atlas-desktop.png)
+[Install on Free Edition](docs/INSTALL_FREE_EDITION.md) · [Connect ChatGPT](#connect-chatgpt) · [Demo script](#demo-script) · [Architecture](docs/ARCHITECTURE.md)
 
-## Explore
+</div>
 
-- **Merchant:** an interactive intent atlas with query clusters, product matches, stock/budget/assortment gaps, filters, zoom and export. Inspect a question and try it in the storefront.
-- **Shopper:** four fictional profiles—Camille, Alex, Léa and Noor—with separate bags and conversations, profile-aware discovery, travel and gifting specialists, and explicit checkout approval.
-- **Brand and catalog:** live product dossiers, completeness checks, an internal catalog feed, and editorial, concise and playful brand voices.
-- **Developer:** inspect AG-UI events, MCP tools, agent handoffs, gateway status and ACP-shaped sandbox checkout.
-- **ChatGPT bridge:** a Vercel OAuth/MCP endpoint connects to the personal demo with owner consent, four read-only tools and temporary saved quotes. The live ChatGPT connection and product retrieval were confirmed on 19 November 2026. See the [connection steps, verification and demo talking points](docs/VERCEL_BRIDGE.md).
-- **Connected journeys:** CopilotKit shared state and tool cards, a live merchant MCP activity feed, ChatGPT search signals in the atlas, and an authenticated quote handoff. See [the five-minute demo and implementation](docs/COPILOT_JOURNEYS.md).
-- **Architecture:** two interactive diagrams in Databricks reference style, with official product artwork, explain the app → Unity Gateway → OpenAI path and ChatGPT → Databricks commerce. Select components for evidence and presenter notes, open configured Databricks resources, or download either diagram as a self-contained SVG with embedded logos.
-- **Operations:** live inventory and sandbox orders, plus clearly labeled synthetic streaming analytics.
+![Merchant intent atlas with explicitly fictional example questions](docs/images/atlas-desktop.png)
 
-The copilot is toggleable, the workspace adapts to mobile, and Driver.js tours connect the shopper, merchant and developer journeys.
+ShopiBricks follows a shopper from discovery to a saved selection, then lets the merchant inspect the evidence behind that journey. Prices and stock come from Lakebase. Agents call bounded commerce tools. Genie answers merchant questions with inspectable SQL. The presenter can move between the shopper, merchant and developer views without leaving the app.
 
-## Present the demo
+**ChatGPT is the conversational client. Databricks is the commerce backend.** The embedded ShopiBricks copilot separately calls OpenAI models through Unity Gateway. The Free Edition reference uses **GPT-OSS-120B served on Databricks**, with no direct `api.openai.com` call.
 
-Select **Present → Start guided demo** for a 14-stop walkthrough: intent clusters, catalog gaps, brand voice, personas, specialist agents, shopper approval, operations, traces and channel readiness. Allow about 15 minutes for narration, plus live interactions. Select any agenda stop to **Spotlight this step** or **Open this view** for hands-on demonstration.
+> Products, shoppers, campaign traffic and orders are fictional. Tool calls, database reads/writes and model execution are real when configured. Checkout never charges a payment or ships a product.
 
-Each stop includes a talk track, an action to show, evidence to point to, and a fallback. **Download talking points** saves the full script; [presenter cues](docs/PRESENTER_CUES.md) contain the same notes. Optional speaker notes appear inside the spotlight and are visible to the audience when screen sharing. **Use demo prompt** prefills the composer for you to submit. Tours navigate and highlight without submitting prompts or confirming orders. The original **Take a tour**, bag and receipt guides remain available.
+## What you can show
 
-## What is real, and what is simulated?
+| Perspective | The experience | Evidence you can open |
+|---|---|---|
+| Shopper | Find a gift or travel kit, compare products, check stock, save a quote and review checkout | Current prices, inventory checks, quote expiry and a sandbox receipt |
+| Merchant | Explore intent clusters, catalog gaps and captured ChatGPT discovery signals | Live journeys, source labels, product matches and Genie-generated SQL |
+| Developer | Follow the concierge and specialist agents across tools and data | AG-UI events, MCP inputs/results, model traces and configured resource links |
+| Presenter | Walk through the story with Driver.js highlights and speaker notes | 14-stop guided demo, downloadable talking points and two interactive architecture diagrams |
 
-Products, seeded shopper profiles, sandbox orders and campaign traffic are fictional. Protocol events record actual execution. Lakebase reads and writes, model calls, MCP tools and Databricks integrations are real when configured. No payment processor is called.
+Four fictional shopper profiles have separate bags and conversations. Brand voices, catalog dossiers and the intent atlas support both guided presentation and hands-on exploration. The atlas has 72 labeled example questions plus a separate account-scoped activity view. Its deterministic TF-IDF / spherical k-means clusters and D3 layout are inspectable demo mechanics, not conversion predictions.
 
-The atlas offers 72 labeled fictional example questions and a separate view of the current account's recorded shopper activity. Clusters use deterministic TF-IDF and spherical k-means, with D3 for layout. Catalog match scores are lexical relevance estimates—not probabilities, purchases or conversion rates. The live concierge checks prices, inventory and the complete selection budget.
+## Architecture
 
-ShopiBricks is the native storefront. Channel readiness distinguishes a configured ChatGPT MCP bridge from observed tool activity; Perplexity, Gemini, Mistral AI and DeepSeek remain **not connected**. Feed export does not publish products or complete merchant onboarding. See [ACP readiness](docs/ACP_READINESS.md).
+![App, Unity Gateway and Databricks services with official product artwork](docs/images/architecture-app.png)
 
-The public discovery, personalization and clustering themes on [Lemrock](https://www.lemrock.com/) informed the demo's experience. ShopiBricks is independent and does not claim affiliation, algorithm equivalence or commercial performance parity.
-
-## Stack
-
-| Layer | Implementation |
+| Layer | What runs there |
 |---|---|
-| Interface | React 19, TypeScript, Vite, CopilotKit, D3 force layout, Lucide, Driver.js |
-| Server | Express, Zod, CopilotKit runtime, AG-UI SSE, official MCP SDK |
-| Agents | Concierge, Catalog, Inventory, Checkout and Merchant analyst |
-| Inference | OpenAI Responses through Databricks Unity AI Gateway |
-| Operational data | Lakebase PostgreSQL; transactional stock and idempotent checkout |
-| Analytics | Lakeflow, Delta, Unity Catalog, SQL warehouse, AI/BI and Genie |
-| Retrieval and observability | Hybrid Vector Search and MLflow tracing |
-| Hosting | Databricks Apps |
+| Experience | React 19, TypeScript, CopilotKit, D3, Driver.js |
+| Application | Express, AG-UI, official MCP SDK, concierge and four specialist agents |
+| Model access | OpenAI Responses through Databricks Unity Gateway |
+| Operational truth | Lakebase Postgres for prices, stock, threads, quotes, orders and events |
+| Analytics | Unity Catalog, Delta, Lakeflow, SQL warehouse, dashboard and Genie |
+| Retrieval and traces | Hybrid Vector Search and MLflow |
+| ChatGPT connection | Vercel Python Function for OAuth/MCP, relayed to the Databricks App |
 
-## Run locally
+The app's **Architecture** tab includes official product artwork, clickable components, presenter notes and self-contained SVG downloads. Its ChatGPT diagram presents the logical connection. The deployment guide shows the actual proxy and authentication path:
 
-Use Node.js 22+, Python 3.12+, `uv`, and the Databricks CLI. Authenticate using native OAuth; do not put API tokens in the repository.
-
-```sh
-databricks auth login --host https://<your-workspace> --profile <your-profile>
-cd app
-cp .env.example .env
-# Edit .env to use your profile and provisioned resource identifiers.
-npm ci
-uv sync
-npm run build
-npm run dev
+```mermaid
+flowchart LR
+    C[ChatGPT] <-->|OAuth + MCP| V[Vercel adapter]
+    V <-->|Native SDK machine OAuth| A[ShopiBricks · Databricks App]
+    U[Shopper / merchant browser] <-->|Databricks sign-in| A
+    A <--> L[(Lakebase)]
+    A <--> D[Vector Search · SQL · Genie]
+    A <-->|Responses API| G[Unity Gateway · OpenAI model]
+    A --> E[MCP activity · MLflow traces]
+    A -->|Owner consent| C
 ```
 
-Open `http://localhost:8000`. Run `npm run seed` once against your dedicated demo database to load the fictional product catalog. See [app/README.md](app/README.md) for resource bindings and runtime details.
+The proxy handles connection compatibility. Commerce logic and persistent OAuth records stay in Databricks. The dedicated bridge principal can use the relay, while the app principal executes the governed tools. This is a shared synthetic demo with application-level account scoping, not per-user delegated database execution.
 
-The bundle has separate `fevm`, `emerging-hackathon` and `shopibricks-personal` targets. The hackathon deployment uses **`openai.shopibricks`** and an isolated Lakebase project, product index, warehouse, pipeline, jobs, dashboard, Genie space and trace experiment. See the [hackathon deployment and verification runbook](docs/EMERGING_HACKATHON.md) for its resource links, repeatable deployment commands and rehearsal checks. The [personal Free Edition runbook](docs/PERSONAL_FREE_EDITION.md) covers **`workspace.shopibricks`**, GPT-OSS-120B compatibility, unavailable Lakebase CDC, and the separate ChatGPT OAuth linking check.
+## Install on Free Edition
 
-The original helpers and `app/app.yaml` remain FEVM-specific. The workspace helper stages a separate manifest from each explicit configuration in `deployments/`. The example environment file contains nonsecret reference metadata; it does not grant access. Always pass the intended target and profile.
+Use the [complete installation guide](docs/INSTALL_FREE_EDITION.md) for the ordered provisioning commands, readiness checks and proxy setup. It covers a new workspace, not just an update to Laurent's demo.
+
+**Prerequisites:** Node.js 22+, Python 3.12+, `uv`, Databricks CLI 1.x, a Free Edition workspace with the required services available, a Vercel team and a ChatGPT account with custom MCP apps enabled. Free Edition quotas and Vercel plan limits apply.
 
 ```sh
-databricks bundle validate --strict --target fevm --profile fevm
-databricks bundle deploy --target fevm --profile fevm
-bash scripts/deploy-app.sh
+git clone https://github.com/laurentfabre/shopibricks.git
+cd shopibricks
+npm --prefix app ci
+uv sync --project app
+npm --prefix tests ci
+
+databricks auth login --host https://YOUR-WORKSPACE.cloud.databricks.com --profile shopibricks-personal
+cp deployments/free-edition.example.json deployments/shopibricks-personal.local.json
+cp docs/examples/free-edition-target.yml resources/free-edition.local.yml
 ```
 
-Local presentation controls use `docs/deployment.json`, which is ignored by Git. Copy [deployment.example.json](docs/deployment.example.json) and fill in the provisioned IDs. Stream helpers start only bounded demo runs; stop them after presenting.
+Edit the two local copies with your workspace, explicitly chosen CLI profile, user, SQL warehouse and resource names. They are ignored by Git. Then follow the [seven installation stages](docs/INSTALL_FREE_EDITION.md#1-clone-install-and-authenticate): preflight, synthetic data, infrastructure, analytics/Genie, app deployment, proxy deployment and ChatGPT linking.
 
-## Verify
+| Free Edition detail | How this demo handles it |
+|---|---|
+| Model availability differs from enterprise workspaces | Uses the tested `system.ai.gpt-oss-120b` unified route |
+| Unified model streaming returned incomplete tool arguments | Uses completed model responses; step and tool events still update |
+| Lakebase CDC unavailable with Default Storage | Keeps operational data in Lakebase and labels the independent synthetic analytics |
+| App lifecycle and compute quotas | Recheck app status before presenting; the tested app stopped automatically after 24 hours |
+| Direct ChatGPT OAuth registration rejected | Uses the separately authenticated Vercel adapter |
+
+Resource names and workspace IDs in the reference deployment files are nonsecret metadata. They do not grant access. The local overrides prevent you from deploying against the reference workspaces by accident when configured as documented.
+
+### Proxy credentials
+
+The [proxy installation steps](docs/INSTALL_FREE_EDITION.md#6-deploy-the-vercel-oauthmcp-adapter) create a dedicated service principal with App `CAN_USE` and a seven-day OAuth client secret. The helper reads `VERCEL_TOKEN` from the local `.env` you explicitly select and sends the generated machine secret directly into a sensitive Vercel production environment variable. It does not print or save that secret locally.
+
+There is no Databricks PAT in the setup. ChatGPT receives bridge-scoped credentials after consent, never the Databricks machine secret. Do not put secret values in source files, README examples, screenshots or GitHub issues. See [credential handling and publication checks](SECURITY.md).
+
+## Connect ChatGPT
+
+First complete the app and proxy installation. Use **your own** bridge URL below.
+
+1. In ChatGPT, enable developer mode if required by your plan/workspace and add a custom MCP app. UI labels can vary; custom apps must be permitted by your account policy.
+2. Name it **ShopiBricks** and enter `https://YOUR-BRIDGE.vercel.app/mcp`.
+3. Choose **OAuth** and **Dynamic client registration (DCR)** when offered. Leave client ID and client secret blank. Create a new connection rather than reusing an earlier failed Databricks registration.
+4. Sign in to Databricks with the account configured in `expected_user`, then approve catalog, inventory and temporary quote access on the ShopiBricks consent page.
+5. Start a new conversation, enable ShopiBricks and send:
+
+   > Use ShopiBricks to list three products with their current prices and check their stock. Use the tools rather than guessing.
+
+6. Confirm that ChatGPT actually invokes ShopiBricks. Open the app as the **same account**, then inspect **Merchant → Live journeys** or the **Developer studio** protocol timeline for the matching call.
+
+A saved connection is not proof of a working tool call. Refresh the app's tool list after server changes, then start a fresh conversation.
+
+| Exposed tool | What ChatGPT can do |
+|---|---|
+| `search_products` | Read the authoritative catalog and prices |
+| `get_inventory` | Check current stock and freshness |
+| `semantic_search` | Retrieve descriptive products from the governed index |
+| `get_merchant_metrics` | Read operational metrics and separate analytical aggregates |
+| `quote_cart` | Save a temporary selection and return its authenticated continuation link |
+
+Four tools are read-only. `quote_cart` writes a **30-minute quote**, not an order or stock reservation. External ChatGPT access does not expose `ask_genie` or order confirmation. Genie is available through the in-app merchant analyst.
+
+## Demo script
+
+Allow 8–12 minutes for this cross-channel story. Open ChatGPT and the Databricks App side by side, signed in with the same owner account. For the longer in-app tour, choose **Present → Start guided demo**, enable **Speaker notes**, or **Download talking points**. Tours highlight and navigate without submitting prompts or confirming checkout.
+
+| Step | Show | Say |
+|---|---|---|
+| 1. Explain the system | Architecture tab, then the ChatGPT diagram | “The conversation starts in ChatGPT. Databricks executes the commerce tools.” |
+| 2. Discover and quote | Ask ChatGPT for a kit using the prompt below | “These prices and stock levels came from Lakebase. The model is choosing tools, not inventing inventory.” |
+| 3. Follow the signal | Merchant → Live journeys, then the atlas activity source with ChatGPT selected | “We capture executed search arguments and tool outcomes, not the customer's full ChatGPT conversation.” |
+| 4. Continue shopping | Open ChatGPT's saved quote link in ShopiBricks | “The selection follows the shopper. We recheck price and stock before they continue.” |
+| 5. Ask the merchant analyst | Use Genie in the in-app merchant copilot | “This answer includes generated SQL and the executed result, under the app's identity.” |
+| 6. Inspect and close | Developer studio, MLflow, then optional sandbox checkout | “Tool evidence, model traces and orders are different records. Only explicit confirmation creates a sandbox order.” |
+
+### Shopper prompt in ChatGPT
+
+> Use ShopiBricks to build a Paris weekend kit under €250, including an audio product and a bag. Search the catalog, check live inventory, and quote the kit. Return the link so I can review it in ShopiBricks. Do not place an order.
+
+If a product is unavailable, ask for an in-stock alternative within the same total budget. Open the continuation URL before the quote expires. Opening the link alone creates no checkout; choosing to continue creates a draft. Confirm only when you intentionally want to consume fictional demo stock.
+
+### Merchant prompts in the app
+
+> Summarize my recent ChatGPT shopping activity. Which products were searched or quoted? Show the supporting MCP calls, then open Live journeys.
+
+> Use Genie to show the top five products by stockout exposure in the synthetic campaign data. Show the generated SQL and executed result. Explain why this is not confirmed lost revenue.
+
+In **Developer studio**, look for `ask_genie`, `query_results` and `statement_id`, then use the configured Genie link to show the backend space. A direct metrics read is not a Genie execution. The external ChatGPT tool allowlist intentionally differs from the in-app merchant tools.
+
+For a native shopper comparison, choose Noor and ask the embedded copilot:
+
+> Build a useful weekend travel kit under €300. Check live inventory and explain each choice. Keep the full selection within the budget.
+
+The [presenter cues](docs/PRESENTER_CUES.md) and [CopilotKit journey guide](docs/COPILOT_JOURNEYS.md) include deeper walkthroughs and fallback language.
+
+## Before the next demo
+
+| Symptom | Check or action |
+|---|---|
+| App unavailable | Start it from Databricks Apps, wait for startup, then check Lakebase connectivity |
+| Proxy returns 503 | Check app status, bridge App permission and the seven-day machine secret; rotate and redeploy if expired |
+| Databricks rejects a ChatGPT client ID | Use the Vercel `/mcp` URL with DCR; do not paste an unrelated OAuth client ID |
+| Consent expired or session changed | Reconnect from ChatGPT in the same browser and use the allowlisted Databricks identity |
+| Grant expired | Reconnect after its eight-hour lifetime |
+| Quote expired or prices changed | Request a fresh quote and review current stock/prices |
+| Empty merchant activity | Generate a real tool call and view it as the same owner; keep fictional examples labeled |
+| Stale analytics | Inspect the timestamp and run a bounded synthetic refresh if needed |
+
+Machine-secret rotation and the verification commands are in the [installation maintenance section](docs/INSTALL_FREE_EDITION.md#maintenance-and-local-development). Vercel `/health` checks configuration, not end-to-end backend access. Updating environment variables requires a new Vercel deployment. GitHub pushes do not redeploy the current file-based Vercel project.
+
+## Develop and verify
+
+After provisioning, copy `app/.env.example` to `app/.env` and fill in your own resource metadata. Build and run from `app/` with `npm run build` and `npm run dev`; open `http://localhost:8000`. Local development uses your OAuth identity, so use a dedicated development database or explicit grants rather than changing the hosted app's table ownership.
 
 ```sh
 npm --prefix app test
 npm --prefix app run build
-cd tests
-npm ci
-SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:atlas
-SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:funnel
-SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:tour
-SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:presenter
-SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:journeys
-SHOPIBRICKS_TEST_URL=http://localhost:8000 npm run verify:architecture
+app/.venv/bin/python -m unittest discover -s bridge/tests
+
+# With the local app running and Google Chrome installed:
+npm --prefix tests run verify:architecture
+npm --prefix tests run verify:journeys
+npm --prefix tests run verify:atlas
+npm --prefix tests run verify:presenter
+
+# Deployment helper checks use synthetic configuration and no cloud calls:
+app/.venv/bin/python -m unittest discover -s scripts/tests
 ```
 
-Browser tests use isolated Chrome with explicit API fixtures. Run the application tests first to generate the atlas fixture. Real integration checks are separate and require the configured workspace.
+Browser checks use isolated Chrome and explicit API fixtures. Run application tests first to generate the atlas fixture. Hosted checks are separate and use native Databricks OAuth:
 
-The November 19 personal deployment passed 47 TypeScript tests, eight Python bridge tests, 19 journey browser checks, 61 atlas/persona checks, seven checkout recovery scenarios and 23 presenter checks. All 14 presenter stops and 17 main tour steps passed on desktop and mobile. Hosted verification passed 24 application, 19 CopilotKit/journey and 32 OAuth/MCP bridge checks, including real shopper and merchant model calls. See [validation details and limitations](docs/VALIDATION.md).
+```sh
+app/.venv/bin/python -P scripts/verify_workspace.py app --target shopibricks-personal
+app/.venv/bin/python -P scripts/verify_bridge.py --profile shopibricks-personal --browser
+```
 
-## Repository
+The last hosted app verification on **November 19, 2026** passed 26 checks, with 35 architecture browser checks and Databricks Apps validation. The connected-journey release also passed 47 application tests, 8 Python bridge tests and 32 hosted bridge checks. Laurent confirmed a real ChatGPT product retrieval on that date. These are dated observations, not a claim that another workspace or today's live credentials have been checked. See [validation records](docs/VALIDATION.md).
 
-- `app/`: frontend, server, shared contracts, product seed and unit tests.
-- `data/`: synthetic stream generation, Lakeflow pipeline and SQL definitions.
-- `resources/`: Databricks bundle resources and reference API payloads.
-- `scripts/`: provisioning, bounded presentation controls and hosted verification.
-- `tests/`: browser and integration regression scripts.
-- `docs/`: architecture, walkthroughs, integration boundaries and selected fixture screenshots.
+## Explore the repository
 
-Brand artwork remains the property of its respective owners; see [asset sources](app/client/public/brand/SOURCES.json). This is a demonstration implementation, with synthetic data and sandbox checkout.
+| Path | Contents |
+|---|---|
+| [`app/`](app/) | React UI, Express backend, commerce contracts, agents and tests |
+| [`bridge/`](bridge/) | Vercel OAuth/MCP adapter and tests |
+| [`data/`](data/) | Synthetic catalog, bounded event generator, Lakeflow and SQL |
+| [`resources/`](resources/) | Bundle pipeline/jobs/dashboard and reference resource definitions |
+| [`deployments/`](deployments/) | Reference configurations and the Free Edition template |
+| [`scripts/`](scripts/) | Provisioning, secret-safe proxy deployment and hosted verification |
+| [`tests/`](tests/) | Browser and journey regression checks |
+| [`docs/`](docs/) | Installation, architecture, demo narration and verification evidence |
+
+<details>
+<summary>Reference deployments and deeper reading</summary>
+
+- [Personal Free Edition reference](docs/PERSONAL_FREE_EDITION.md), [emerging-hackathon](docs/EMERGING_HACKATHON.md), and the [original rehearsal runbook](docs/RUNBOOK.md).
+- [App architecture](docs/ARCHITECTURE.md), [OAuth/MCP protocol flow](docs/VERCEL_BRIDGE.md), [intent atlas](docs/INTENT_ATLAS.md), [personas](docs/PERSONAS_AND_GROWTH.md) and [ACP readiness](docs/ACP_READINESS.md).
+- [Laurent's hosted personal demo](https://shopibricks-personal-7474650310803801.aws.databricksapps.com) requires workspace access. Clone and install your own copy to use your own account.
+
+</details>
+
+**Scope.** MCP events are application telemetry around tool execution. They do not push unsolicited messages into ChatGPT. ACP checkout is a sandbox merchant contract, not native ChatGPT checkout or completed merchant onboarding. Other named shopping channels are not connected. Search relevance and synthetic stockout exposure are not conversion probabilities or booked losses.
+
+The public discovery and clustering themes on [Lemrock](https://www.lemrock.com/) informed the experience. ShopiBricks is independent. Brand artwork belongs to its respective owners; [official asset sources](app/client/public/brand/SOURCES.json) are included.

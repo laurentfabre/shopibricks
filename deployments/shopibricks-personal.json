@@ -15,5 +15,7 @@
   "cdc_enabled": false,
   "genie_parent_path": "/Workspace/Users/laurent.fabre@gmail.com",
   "source_code_path": "/Workspace/Users/laurent.fabre@gmail.com/shopibricks-personal-app",
-  "experiment_name": "/Shared/ShopiBricks-Personal-Traces"
+  "experiment_name": "/Shared/ShopiBricks-Personal-Traces",
+  "vercel_team_id": "team_855m3YQ51TyMm7TEIwoSSVNZ",
+  "vercel_project": "shopibricks-mcp-personal"
 }

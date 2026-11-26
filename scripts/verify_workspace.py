@@ -22,7 +22,10 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("phase", choices=["app", "agent", "genie", "checkout"])
 parser.add_argument("--target", required=True, choices=["emerging-hackathon", "shopibricks-personal"])
 args = parser.parse_args()
-config = json.loads((ROOT / "deployments" / f"{args.target}.json").read_text())
+config_path = ROOT / "deployments" / f"{args.target}.local.json"
+if not config_path.exists():
+    config_path = ROOT / "deployments" / f"{args.target}.json"
+config = json.loads(config_path.read_text())
 inventory = json.loads((ROOT / "docs" / f"deployment.{args.target}.json").read_text())
 app_url = inventory["app_url"].rstrip("/")
 namespace = f'{config["catalog"]}.{config["schema"]}'

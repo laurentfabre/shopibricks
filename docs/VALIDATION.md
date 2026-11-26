@@ -1,5 +1,17 @@
 # Validation
 
+## Public installation guide — November 26, 2026
+
+The README now covers a new Free Edition installation, the Vercel OAuth/MCP adapter, ChatGPT connection, a timed shopper/merchant demo and credential maintenance. Placeholder templates and ignored local overrides let installers use their own profile, identity and Vercel project. The helpers reject inventory belonging to a different workspace/app instead of reusing its resource bindings.
+
+- Gitleaks reported no findings across the 10 reachable preceding commits and a separate copy of the proposed publication files. Environment examples use placeholders; local credentials and generated inventory remain ignored.
+- Six offline deployment-configuration checks passed, including explicit-profile selection, local overrides, owner checks and rejection of a mismatched inventory.
+- All 47 TypeScript application tests and eight Python bridge tests passed.
+- Documentation links, Python syntax and matching JSON/YAML template fields were checked. GitHub's Markdown renderer produced the README preview.
+- A resource-free bundle check resolved the local host/profile/variable overrides correctly, then stopped because the saved personal OAuth refresh token had expired. No new hosted validation or fresh-workspace deployment is claimed for this documentation update. No deployment or credential rotation was performed.
+
+The November 19 records below remain the latest recorded hosted evidence. Reauthenticate, check the bridge machine-secret expiry and run the hosted verifiers before the next live demo.
+
 ## Architecture workspace and official artwork — November 19, 2026
 
 The Architecture tab provides two logical views: **App & Databricks** and **ChatGPT & Databricks**, now using Databricks reference styling and official product artwork. Model labels and resource links derive from the current deployment. The ChatGPT view abstracts authentication transport and omits the proxy provider; backend connection behavior is unchanged.

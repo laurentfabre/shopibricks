@@ -4,14 +4,15 @@ React storefront and merchant console, Express commerce API, CopilotKit + AG-UI 
 
 ## Local development
 
-Use Node.js 22+ and Python 3.12+. The configured workspace is FEVM serverless stable.
+Use Node.js 22+ and Python 3.12+. Provision your workspace with the [Free Edition installation guide](../docs/INSTALL_FREE_EDITION.md), then fill in the placeholder values in `.env.example` using your own resource metadata.
 
 ```sh
-databricks auth login --host https://fevm-serverless-stable-vwywqi.cloud.databricks.com --profile fevm
+databricks auth login --host https://YOUR-WORKSPACE.cloud.databricks.com --profile shopibricks-personal
 cp .env.example .env
+# Edit .env with your profile and provisioned resource identifiers.
 npm ci
 uv sync
-npm run seed
+npm run build
 npm run dev
 ```
 

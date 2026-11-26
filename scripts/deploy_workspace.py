@@ -18,12 +18,18 @@ ROOT = Path(__file__).resolve().parents[1]
 class Deployment:
     def __init__(self, target):
         self.target = target
-        self.config = json.loads((ROOT / "deployments" / f"{target}.json").read_text())
+        config_path = ROOT / "deployments" / f"{target}.local.json"
+        if not config_path.exists():
+            config_path = ROOT / "deployments" / f"{target}.json"
+        self.config = json.loads(config_path.read_text())
         self.profile = self.config["profile"]
         self.out = ROOT / ".local" / "deploy" / target
         self.out.mkdir(parents=True, exist_ok=True)
         self.inventory_path = ROOT / "docs" / f"deployment.{target}.json"
         self.inventory = json.loads(self.inventory_path.read_text()) if self.inventory_path.exists() else {}
+        for key in ("host", "app_name", "lakebase_project"):
+            if self.inventory.get(key) and self.inventory[key] != self.config[key]:
+                raise ValueError(f"Existing local inventory has a different {key}; use a fresh checkout for a new deployment")
         self.inventory.update(self.config)
         self.ns = f'{self.config["catalog"]}.{self.config["schema"]}'
 

@@ -2,7 +2,9 @@
 
 **50 minutes. Laurent: 00:00–25:00. Hatim: 25:00–50:00.**
 
-For a shorter walkthrough, open **Present → Start guided demo** in the app: 13 Driver.js highlights, about 13 minutes of narration plus live interactions. Start at any agenda stop, spotlight its UI, or open its view to interact. **Download talking points** saves the full script. Speaker notes inside the tour are optional and visible on a shared screen; keep [the presenter cues](PRESENTER_CUES.md) on a second screen if you prefer. This document contains the extended Laurent / Hatim session and rehearsal instructions.
+This is the original extended FEVM rehearsal. For a fresh Free Edition installation and current ChatGPT demo, start with the [README](../README.md) and [installation guide](INSTALL_FREE_EDITION.md).
+
+For a shorter walkthrough, open **Present → Start guided demo** in the app: 14 Driver.js highlights, about 15 minutes of narration plus live interactions. Start at any agenda stop, spotlight its UI, or open its view to interact. **Download talking points** saves the full script. Speaker notes inside the tour are optional and visible on a shared screen; keep [the presenter cues](PRESENTER_CUES.md) on a second screen if you prefer. This document contains the extended Laurent / Hatim session and rehearsal instructions.
 
 The through-line: a shopper wants a Paris weekend kit below €250. Demand changes while the shopper is deciding. Governed data and specialist agents find an available option, the interface adapts, and the shopper explicitly confirms a sandbox order. Follow the resulting order and its events into the merchant view.
 
@@ -12,11 +14,11 @@ This is a synthetic retail demo. A completed sandbox order persists in Lakebase 
 
 The [hosted app](https://shopibricks-paris-7474645565734606.aws.databricksapps.com) used deployment `01f1da4b5185131aaedb46647f556b20` for this historical rehearsal at **01:34:45 UTC**. Its agent rerun passed **11/11** checks with six real model calls, recommending available headphones and a tote for **€168**. Its checkout rerun passed **27/27** checks and created a €19 notebook order, decrementing stock **114 → 113 exactly once**. These are dated results; see [current validation](VALIDATION.md) and verify the active deployment before presenting.
 
-Separate dated rehearsals proved the server-computed **€237** UI total and visible human-confirmed order `ord_ca95c270-66fd-4006-a17a-2fbb9f0befc1`, which survived permalink reload and appeared in Unity Catalog `current_orders` through native CDC. [The hosted order screenshot](hosted-order.png) and [€237 recommendation screenshot](hosted-agent.png) retain those earlier rehearsals; do not describe them as the final €168 run.
+Separate dated rehearsals proved the server-computed **€237** UI total and visible human-confirmed order `ord_ca95c270-66fd-4006-a17a-2fbb9f0befc1`, which survived permalink reload and appeared in Unity Catalog `current_orders` through native CDC. Private local screenshots retain those earlier rehearsals; do not describe them as the final €168 run.
 
 The app's analyst has a verified **`ask_genie`** execution, generated SQL, service-principal identity and returned result: Forma Headphones had **€184,212 synthetic stockout exposure across all cities and channels**, using events through **00:28:41 UTC**. This figure is neither Paris-only nor actual lost revenue. The **00:40 UTC stockout rehearsal** selected the daypack and earbuds for **€158** in **8.38 seconds**, without checkout; headphones were restored to 42 afterward.
 
-The final hosted run's **MLflow trace body was downloaded, inspected and matched to its actual OpenAI response ID**. Use [the verified hosted trace](https://fevm-serverless-stable-vwywqi.cloud.databricks.com/ml/experiments/588811517474050/traces/a24563724d88895df4dc1fc2ba6c36f9) in experiment **`588811517474050`**, backed by Unity Catalog prefix `agent_traces`. The old experiment is historical. All delivered demo verification gates are complete; [the verification record](../tests/VERIFICATION.md) contains the exact evidence. ChatGPT connection remains deferred and native ACP merchant activation is external setup.
+The final hosted run's **MLflow trace body was downloaded, inspected and matched to its actual OpenAI response ID**. Use [the verified hosted trace](https://fevm-serverless-stable-vwywqi.cloud.databricks.com/ml/experiments/588811517474050/traces/a24563724d88895df4dc1fc2ba6c36f9) in experiment **`588811517474050`**, backed by Unity Catalog prefix `agent_traces`. The old experiment is historical. All delivered demo verification gates are complete; [the validation record](VALIDATION.md) contains the exact evidence. The ChatGPT connection was deferred at that rehearsal; the [personal bridge](VERCEL_BRIDGE.md) was subsequently verified on November 19. Native ACP merchant activation remains external setup.
 
 ## Rehearsal and room setup
 
@@ -74,7 +76,7 @@ Inspect the generated SQL and returned rows. Confirm the timeline contains `ask_
 | 35:00–39:00 | Review the sandbox checkout card, provide the fictional address, then explicitly confirm. | Read the line items, VAT and delivery total. Pause before confirmation. “The customer controls this transition.” After confirming, show the persistent order ID and completed state. |
 | 39:00–43:00 | Protocol Studio. Inspect the correlated run/tool/event trail and checkout request/response. | Distinguish AG-UI streaming events, MCP tools, OpenAI Responses through Unity Gateway and ACP merchant REST endpoints. Show one actual example of each implemented integration. Point out idempotency and authoritative cart responses. |
 | 43:00–46:00 | Operations and the persisted protocol timeline. Inspect `current_orders` for the same order when CDC has caught up. Open the verified hosted MLflow trace in experiment `588811517474050`; inspect the `DatabricksResponses` span's request and `delegate_catalog` response. | Match response ID `resp_03ea1df619f7deb5016aee8081790887d18d91697c69922c8c` to agent run `c7f44cbb-8be3-440c-9326-fdb8c9a3faf4`. Explain that this is a dated, verified hosted model span; it is separate from today's new order unless that new run has its own recorded link. Use the matching order ID to show asynchronous CDC. |
-| 46:00–48:00 | Stay in Protocol studio. Show live MCP discovery, then the ACP readiness notes. The ChatGPT account connection is deferred. | Explain the next integration boundary: “The merchant API is a sandbox. Native ChatGPT checkout additionally needs merchant onboarding, the agreed signature contract, production payment rails and conformance testing.” A discoverable MCP endpoint does not prove a connection from ChatGPT. |
+| 46:00–48:00 | Stay in Protocol studio. Show live MCP discovery, then the ACP readiness notes. Use the separately configured [ChatGPT bridge](VERCEL_BRIDGE.md) if it passes the current rehearsal checks. | Explain the next integration boundary: “The merchant API is a sandbox. Native ChatGPT checkout additionally needs merchant onboarding, the agreed signature contract, production payment rails and conformance testing.” A discoverable MCP endpoint does not prove a connection from ChatGPT. |
 | 48:00–50:00 | Return to the completed shopper journey; leave 1–2 minutes for questions. | Ask the audience to evaluate the connected outcome: fresh data → governed tool use → useful UI → human-approved transaction → inspectable evidence. Avoid reciting every platform service. |
 
 **Primary shopper prompt:**
@@ -113,19 +115,11 @@ python3 scripts/demo.py status
 
 An already-triggered Lakeflow update can finish independently after the emitter is canceled. `status` must show no active emitter and a completed/stopped pipeline update before leaving the demo unattended.
 
-## Deferred: personal ChatGPT Pro connection
+## ChatGPT connection
 
-The ChatGPT connection is explicitly deferred for this build. These instructions are a future rehearsal reference, not part of the current live script or a completed integration.
+The personal Vercel bridge connected successfully on November 19, 2026. Use the [current connection steps and demo script](../README.md#connect-chatgpt), and recheck the app, machine-secret lifetime and consent before presenting. A working MCP connection does not confer native ChatGPT checkout or merchant approval.
 
-The current [official connection guide](https://developers.openai.com/apps-sdk/deploy/connect-chatgpt) uses **ChatGPT Plugins → plus → Add custom MCP server**. Account and workspace policies still apply.
-
-1. Before the talk, prove the public HTTPS `/mcp` endpoint can initialize, list tools and call a read-only product search. Authentication discovery must work through the hosted endpoint.
-2. In [ChatGPT Plugins](https://chatgpt.com/plugins), choose **Add custom MCP server**, set the name to **ShopiBricks**, and enter the deployed `/mcp` URL. Complete the configured authentication flow. Review the displayed tools before installing it.
-3. Start a new ChatGPT conversation, type `@`, select ShopiBricks, and ask: “Find available wireless audio products below €150 in ShopiBricks. Show the current price and stock.”
-4. Inspect the actual tool result and compare a product's price and stock with the Databricks App. Record whether this invocation succeeded. A saved plugin entry without a successful tool call is not a passed integration.
-5. After changing tools or metadata, use **Refresh** in the ChatGPT connection and start a fresh conversation.
-
-If direct authentication is not compatible, [Secure MCP Tunnel](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels) is a possible private connection path. It requires a Platform tunnel, appropriate permissions and a separate runtime API key. A ChatGPT Pro subscription alone does not supply or authorize use of that credential. Do not introduce an untested tunnel during the presentation.
+## Historical FEVM data baseline
 
 **Initial data baseline:** the first successful pipeline validation reported 121,920 bronze events, 120,658 accepted silver events and 1,262 quarantined events. These are a build-time snapshot; show current counts during the talk. The curated Genie space is `01f1da3bc13e13deb495675656b7255f` in the selected FEVM workspace.
 
@@ -133,4 +127,4 @@ A later bounded rehearsal added three microbatches: **122,640 bronze / 121,369 s
 
 ## Verification record
 
-See `tests/VERIFICATION.md` for observed local/hosted checks and remaining gaps. A planned click path in this runbook is not evidence that an integration passed.
+See [validation records](VALIDATION.md) for observed local/hosted checks and remaining gaps. A planned click path in this runbook is not evidence that an integration passed.

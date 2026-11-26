@@ -19,6 +19,8 @@ Official Databricks product artwork represents Apps, Lakebase, Lakeflow, Genie, 
 
 ## 1. App, Databricks and Unity Gateway to OpenAI
 
+![App and Databricks reference architecture](images/architecture-app.png)
+
 ```mermaid
 flowchart LR
   UI[ShopiBricks React UI\nShopper / Merchant / Developer] <-->|AG-UI + shared state| CK[CopilotKit runtime]
@@ -48,6 +50,8 @@ Explicitly asking **“Use Genie”** routes the merchant analyst to the configu
 **Presenter line:** “CopilotKit connects the experience to our agents. Unity Gateway provides governed OpenAI model access. The tools ground each answer in Databricks data, and Genie turns merchant questions into inspectable SQL.”
 
 ## 2. ChatGPT connected to Databricks
+
+![Logical ChatGPT and Databricks reference architecture](images/architecture-chatgpt.png)
 
 ```mermaid
 flowchart LR

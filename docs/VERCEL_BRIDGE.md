@@ -1,5 +1,7 @@
 # ChatGPT through the Vercel MCP bridge
 
+For a new workspace and Vercel project, follow the [proxy installation stages](INSTALL_FREE_EDITION.md#6-deploy-the-vercel-oauthmcp-adapter). The helper reads your explicitly configured profile, owner and Vercel team/project from `deployments/shopibricks-personal.local.json` when present. The links and identities below document the reference deployment.
+
 The personal demo has a separate OAuth issuer on Vercel. This avoids asking Databricks to register ChatGPT's connector-specific client metadata URL. Databricks still authenticates the owner through the existing App login and authenticates the dedicated bridge service principal through native M2M OAuth.
 
 **MCP URL:** https://shopibricks-mcp-personal.vercel.app/mcp
@@ -77,7 +79,7 @@ ACP checkout stays in the ShopiBricks app and requires human confirmation. The b
 | Dynamic client registration | 30 days |
 | Databricks machine OAuth client secret | 7 days |
 
-The initial machine secret expires **26 November 2026 at 13:10 UTC**. Rotate before the next demo if necessary. The Free Edition App also stops automatically after 24 hours and may need starting from the Databricks Apps page. Vercel `/health` checks configuration only; use the hosted verifier to check the backend.
+The initial machine secret was scheduled to expire **26 November 2026 at 13:10 UTC**. Check the latest local inventory and rotate before presenting if that credential has not been replaced. The Free Edition App also stops automatically after 24 hours and may need starting from the Databricks Apps page. Vercel `/health` checks configuration only; use the hosted verifier to check the backend.
 
 The deployment helper uses the explicitly authorized `VERCEL_TOKEN` from `../.env` because Vercel MCP did not have access to team `lf-dd9e`. It never prints the token or saves generated client-secret values locally. The native Databricks CLI/SDK uses the explicitly chosen `shopibricks-personal` profile. Vercel stores the machine secret as a sensitive production environment variable.
 

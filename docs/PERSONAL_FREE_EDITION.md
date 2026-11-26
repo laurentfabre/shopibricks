@@ -1,5 +1,7 @@
 # ShopiBricks on personal Free Edition
 
+**Installing your own copy?** Use the [fresh Free Edition installation guide](INSTALL_FREE_EDITION.md). This page records Laurent's reference deployment and dated verification.
+
 Target: `shopibricks-personal`, authenticated as `laurent.fabre@gmail.com` through native Databricks CLI OAuth. The workspace is `https://dbc-c3e48176-204b.cloud.databricks.com` and the Unity Catalog namespace is `workspace.shopibricks`.
 
 ## Demo links

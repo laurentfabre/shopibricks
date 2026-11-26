@@ -4,7 +4,7 @@ ShopiBricks demonstrates merchant-side commerce using the [OpenAI Agentic Checko
 
 The checkout API and a ChatGPT merchant listing are separate deliverables. A reachable endpoint or successful local test does not establish merchant onboarding, OpenAI certification, or availability to ChatGPT shoppers.
 
-The presenter's **personal ChatGPT Pro account connection is deferred** for this build. A later custom MCP plugin connection remains subject to account policy and working authentication. The [official setup guide](https://developers.openai.com/apps-sdk/deploy/connect-chatgpt) currently directs users to ChatGPT Plugins → plus → Add custom MCP server. A successful read-only product-search call from ChatGPT would prove that connection; it still would not establish native ACP checkout or merchant approval. A Secure MCP Tunnel is a separate option with Platform permissions and a runtime API key requirement.
+The personal ChatGPT MCP connection through the [Vercel bridge](VERCEL_BRIDGE.md) was verified on November 19, 2026, including product retrieval. Use the [current setup guide](INSTALL_FREE_EDITION.md) and [demo script](../README.md#demo-script) for a new installation. The connection exposes bounded commerce tools and temporary saved quotes. It does not establish native ACP checkout, payment processing or merchant approval.
 
 ## Protocol boundaries
 
@@ -16,7 +16,7 @@ The presenter's **personal ChatGPT Pro account connection is deferred** for this
 | ACP checkout REST endpoints | Create, update, fetch, complete and cancel authoritative merchant checkout sessions. |
 | Lakebase commerce events | Persisted operational evidence. An event stored here is **not** evidence that OpenAI received an authenticated webhook. |
 
-The currently fetched official checkout documentation states that MCP support for the Agentic Checkout specification is a future capability. Do not label a custom MCP checkout tool as native ACP-over-MCP support.
+This implementation keeps MCP commerce tools and the ACP-shaped checkout REST API separate. It does not claim native ACP-over-MCP support.
 
 ## What the sandbox must prove
 
@@ -30,7 +30,7 @@ The currently fetched official checkout documentation states that MCP support fo
 - Checkout and conversation access are scoped to the application caller. The hosted Databricks authentication boundary is documented accurately.
 - Responses and UI explicitly disclose the sandbox payment rail. A `stripe` protocol fixture is not a live Stripe integration.
 
-Execution results belong in [the verification record](../tests/VERIFICATION.md); this checklist is not a conformance certificate.
+Execution results belong in [the validation record](VALIDATION.md); this checklist is not a conformance certificate.
 
 ## What native ChatGPT commerce still requires
 
